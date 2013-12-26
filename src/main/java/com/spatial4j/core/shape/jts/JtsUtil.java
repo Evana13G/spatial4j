@@ -1,5 +1,7 @@
 package com.spatial4j.core.shape.jts;
 
+
+import java.util.LinkedList;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.CartesianLine;
 import com.spatial4j.core.shape.Circle;
@@ -61,11 +63,29 @@ public class JtsUtil {
   }
 
   public Point calcCircleIntersection(Circle circ, CartesianLine line){
-    circ.getCenter().getX()
+    double radius = circ.getRadius();
+    double theta = Math.atan(line.getSlope());
+    double X = (radius*Math.cos(theta)) + circ.getCenter().getX();
+    double Y = (radius*Math.sin(theta)) + circ.getCenter().getY();
+    return new PointImpl(X, Y, ctx);
+  }
+
+  public CartesianLine calcTangentLine(Point pt){
+    return new CartesianLineImpl(-1/calcSlope(circ.getCenter(), pt), pt);
   }
 
   public double calcSlope(Point P1, Point P2){
     return (P2.getY()-P1.getY())/(P2.getX()-P2.getX());
+  }
+
+  public List<Point> recursiveIter(int iter, CartesianLine line1, CartesianLine line2){
+    if(iter == 0){
+      return calcLineIntersection(line1, line2);
+   }
+   List<Point> pt =  new ArrayList<Point>();
+    pt.add(calcLineIntersection(line1, line2));
+    CartesianLine line3 = calcTangentLine();
+    return pt.add(recursiveIter(iter-1, line1, line3));
   }
 
 }
