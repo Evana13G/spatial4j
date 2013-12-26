@@ -1,7 +1,10 @@
 package com.spatial4j.core.shape.jts;
 
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.CartesianLine;
 import com.spatial4j.core.shape.Circle;
@@ -50,7 +53,7 @@ public class JtsUtil {
     Point interPoint = calcLineIntersection(line_1, line_2);
     CartesianLine centerLine = new CartesianLineImpl(calcSlope(circ.getCenter(), interPoint), interPoint, ctx);
     Point p = calcCircleIntersection(circ, centerLine);
-    CartesianLine tangentLine = new CartesianLineImpl(-1/calcSlope(circ.getCenter(), interPoint), p);
+    CartesianLine tangentLine = new CartesianLineImpl(-1/calcSlope(circ.getCenter(), interPoint), p, ctx);
     return tangentLine;
   }
 
@@ -71,7 +74,7 @@ public class JtsUtil {
   }
 
   public CartesianLine calcTangentLine(Point pt){
-    return new CartesianLineImpl(-1/calcSlope(circ.getCenter(), pt), pt);
+    return new CartesianLineImpl(-1/calcSlope(circ.getCenter(), pt), pt, ctx);
   }
 
   public double calcSlope(Point P1, Point P2){
@@ -80,12 +83,23 @@ public class JtsUtil {
 
   public List<Point> recursiveIter(int iter, CartesianLine line1, CartesianLine line2){
     if(iter == 0){
-      return calcLineIntersection(line1, line2);
-   }
-   List<Point> pt =  new ArrayList<Point>();
-    pt.add(calcLineIntersection(line1, line2));
-    CartesianLine line3 = calcTangentLine();
-    return pt.add(recursiveIter(iter-1, line1, line3));
+      List<Point> listOfPoints =  new ArrayList<Point>();
+      Point intersectionPoint = calcLineIntersection(line1, line2);
+      listOfPoints.add(intersectionPoint);
+      return listOfPoints;
+    } else {
+      List<Point> listOfPoints =  new ArrayList<Point>();
+      Point intersectionPoint = calcLineIntersection(line1, line2);
+      CartesianLine line3 = calcTangentLine(intersectionPoint);
+      listOfPoints.add(intersectionPoint);
+      return addLst(listOfPoints, recursiveIter(iter-1, line1, line3), recursiveIter(iter-1, line3, line2));
+    }
+  }
+
+  public List<Point> addLst(List<Point> lst1, List<Point> lst2, List<Point> lst3){
+    lst1.addAll(lst2);
+    lst1.addAll(lst3);
+    return lst1;
   }
 
 }
