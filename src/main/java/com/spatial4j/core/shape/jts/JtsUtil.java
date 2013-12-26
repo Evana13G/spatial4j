@@ -30,32 +30,22 @@ public class JtsUtil {
 
   //Note: tolerance will eventually be the maximum distance away from circle
   // for now, we will use it as the number of iterations to use
-  public void getEnclosingPolygon(double tolerance){
+  public List<Point> getEnclosingPolygon(int tolerance){
     double RADIUS = circ.getRadius();
     Point CENTER = circ.getCenter();
     CartesianLine line_1 = new CartesianLineImpl (0.0, CENTER, this.ctx);
     CartesianLine line_2 = new CartesianLineImpl (10000.0, CENTER, this.ctx);
     //CartesianLine line_2 = new CartesianLineImpl (Double.POSITIVE_INFINITY, CENTER, this.ctx);
-
-    CartesianLine line_3 = iterate(line_1, line_2);
-
-    //will eventually incorporate iterative behavior
-    for(int i=0; i<tolerance; i++){
-      line_3 = iterate(line_1, line_3);
-
-      iterate(line_3, line_2);
-    }
-
-    return ;
+    return recursiveIter(tolerance, line_1, line_2);
   }
 
-  public CartesianLine iterate(CartesianLine line_1, CartesianLine line_2){
-    Point interPoint = calcLineIntersection(line_1, line_2);
-    CartesianLine centerLine = new CartesianLineImpl(calcSlope(circ.getCenter(), interPoint), interPoint, ctx);
-    Point p = calcCircleIntersection(circ, centerLine);
-    CartesianLine tangentLine = new CartesianLineImpl(-1/calcSlope(circ.getCenter(), interPoint), p, ctx);
-    return tangentLine;
-  }
+//  public CartesianLine iterate(CartesianLine line_1, CartesianLine line_2){
+//    Point interPoint = calcLineIntersection(line_1, line_2);
+//    CartesianLine centerLine = new CartesianLineImpl(calcSlope(circ.getCenter(), interPoint), interPoint, ctx);
+//    Point p = calcCircleIntersection(circ, centerLine);
+//    CartesianLine tangentLine = new CartesianLineImpl(-1/calcSlope(circ.getCenter(), interPoint), p, ctx);
+//    return tangentLine;
+//  }
 
   public Point calcLineIntersection(CartesianLine L1, CartesianLine L2){
     double X = ((L1.getSlope()*L1.getDefiningPoint().getX()) + L1.getDefiningPoint().getY() +
@@ -70,6 +60,15 @@ public class JtsUtil {
     double theta = Math.atan(line.getSlope());
     double X = (radius*Math.cos(theta)) + circ.getCenter().getX();
     double Y = (radius*Math.sin(theta)) + circ.getCenter().getY();
+    return new PointImpl(X, Y, ctx);
+  }
+
+  public Point calcCircleIntersection(Circle circ, Point point){
+    double radius = circ.getRadius();
+    double slope = calcSlope(circ.getCenter(), point);
+    double theta = Math.atan(slope);
+    double X = radius*Math.cos(theta) + circ.getCenter().getX();
+    double Y = radius*Math.sin(theta) + circ.getCenter().getY();
     return new PointImpl(X, Y, ctx);
   }
 
@@ -90,9 +89,10 @@ public class JtsUtil {
     } else {
       List<Point> listOfPoints =  new ArrayList<Point>();
       Point intersectionPoint = calcLineIntersection(line1, line2);
-      CartesianLine line3 = calcTangentLine(intersectionPoint);
+      Point circleIntersectionPoint = calcCircleIntersection(circ, intersectionPoint);
+      CartesianLine line3 = calcTangentLine(circleIntersectionPoint);
       listOfPoints.add(intersectionPoint);
-      return addLst(listOfPoints, recursiveIter(iter-1, line1, line3), recursiveIter(iter-1, line3, line2));
+      return addLst(listOfPoints, recursiveIter(iter - 1, line1, line3), recursiveIter(iter - 1, line3, line2));
     }
   }
 
