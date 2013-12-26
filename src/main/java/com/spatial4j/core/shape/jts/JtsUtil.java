@@ -2,7 +2,6 @@ package com.spatial4j.core.shape.jts;
 
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import com.spatial4j.core.context.SpatialContext;
@@ -31,7 +30,6 @@ public class JtsUtil {
   //Note: tolerance will eventually be the maximum distance away from circle
   // for now, we will use it as the number of iterations to use
   public List<Point> getEnclosingPolygon(int tolerance){
-    double RADIUS = circ.getRadius();
     Point CENTER = circ.getCenter();
     CartesianLine line_1 = new CartesianLineImpl (0.0, CENTER, this.ctx);
     CartesianLine line_2 = new CartesianLineImpl (10000.0, CENTER, this.ctx);
