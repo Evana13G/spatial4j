@@ -1,4 +1,4 @@
-package com.spatial4j.core.shape.jts;
+package com.spatial4j.core.context.jts;
 
 
 import java.util.ArrayList;
@@ -16,12 +16,12 @@ import com.spatial4j.core.shape.impl.RectangleImpl;
 /**
  * Created by egizzi on 12/23/13.
  */
-public class JtsUtil {
+public class CirclePolygonizer {
 
   public static void main(String[] args) {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
-    JtsUtil JtsTestObject = new JtsUtil(ctx);
-    List<Point> listOfPoints = JtsTestObject.getEnclosingPolygon(2);
+    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx);
+    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(2);
     for(int i=0;i<listOfPoints.size(); i++){
       System.out.print(listOfPoints.get(i));
       System.out.print('\n');
@@ -31,7 +31,7 @@ public class JtsUtil {
   protected SpatialContext ctx;
   protected Circle circ;
 
-  public JtsUtil(SpatialContext ctx){
+  public CirclePolygonizer(SpatialContext ctx){
     this.ctx = ctx;
     this.circ = ctx.makeCircle(50.0, 250.0, 10.0);
   }
