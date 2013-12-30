@@ -17,16 +17,16 @@ import com.spatial4j.core.shape.impl.RectangleImpl;
  */
 public class CirclePolygonizer {
 
-  public static void main(String[] args) {
-    SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
-    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx, circle);
-    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(1);
-    for(int i=0;i<listOfPoints.size(); i++){
-      System.out.print(listOfPoints.get(i));
-      System.out.print('\n');
-    }
-  }
+//  public static void main(String[] args) {
+//    SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
+//    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
+//    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx, circle);
+//    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(1);
+//    for(int i=0;i<listOfPoints.size(); i++){
+//      System.out.print(listOfPoints.get(i));
+//      System.out.print('\n');
+//    }
+//  }
 
 
   protected SpatialContext ctx;
@@ -42,11 +42,15 @@ public class CirclePolygonizer {
     Point definingPoint2 = ctx.makePoint(circ.getCenter().getX()+circ.getRadius(), circ.getCenter().getY());
     CartesianLine line_1 = new CartesianLineImpl (0.0, definingPoint1, this.ctx);
     CartesianLine line_2 = new CartesianLineImpl (10000000.0, definingPoint2, this.ctx);
+
 //    CartesianLine line_2 = new CartesianLineImpl (Double.POSITIVE_INFINITY, definingPoint2, this.ctx);
+
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
+
     listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line_1, line_2, listOfPoints);
     listOfPoints.add(definingPoint2);
+
     return listOfPoints;
   }
 
