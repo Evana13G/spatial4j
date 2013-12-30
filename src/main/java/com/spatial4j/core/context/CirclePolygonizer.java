@@ -19,24 +19,24 @@ public class CirclePolygonizer {
 
   public static void main(String[] args) {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
-    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx);
-    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(0.1);
+    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
+    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx, circle);
+    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(1);
     for(int i=0;i<listOfPoints.size(); i++){
       System.out.print(listOfPoints.get(i));
       System.out.print('\n');
     }
   }
 
+
   protected SpatialContext ctx;
   protected Circle circ;
 
-  public CirclePolygonizer(SpatialContext ctx){
+  public CirclePolygonizer(SpatialContext ctx, Circle circ){
     this.ctx = ctx;
-    this.circ = ctx.makeCircle(50.0, 250.0, 10.0);
+    this.circ = circ;
   }
 
-  //Note: tolerance will eventually be the maximum distance away from circle
-  // for now, we will use it as the number of iterations to use
   public List<Point> getEnclosingPolygon(double tolerance){
     Point definingPoint1 = ctx.makePoint(circ.getCenter().getX(), circ.getCenter().getY()+circ.getRadius());
     Point definingPoint2 = ctx.makePoint(circ.getCenter().getX()+circ.getRadius(), circ.getCenter().getY());
@@ -44,17 +44,11 @@ public class CirclePolygonizer {
     CartesianLine line_2 = new CartesianLineImpl (10000000.0, definingPoint2, this.ctx);
 //    CartesianLine line_2 = new CartesianLineImpl (Double.POSITIVE_INFINITY, definingPoint2, this.ctx);
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
+    listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line_1, line_2, listOfPoints);
+    listOfPoints.add(definingPoint2);
     return listOfPoints;
   }
-
-//  public CartesianLine iterate(CartesianLine line_1, CartesianLine line_2){
-//    Point interPoint = calcLineIntersection(line_1, line_2);
-//    CartesianLine centerLine = new CartesianLineImpl(calcSlope(circ.getCenter(), interPoint), interPoint, ctx);
-//    Point p = calcCircleIntersection(circ, centerLine);
-//    CartesianLine tangentLine = new CartesianLineImpl(-1/calcSlope(circ.getCenter(), interPoint), p, ctx);
-//    return tangentLine;
-//  }
 
   public Point calcLineIntersection(CartesianLine L1, CartesianLine L2){
     double X = ((L1.getSlope()*L1.getDefiningPoint().getX()) - L1.getDefiningPoint().getY() -
@@ -88,24 +82,6 @@ public class CirclePolygonizer {
   public double calcSlope(Point P1, Point P2){
     return (P2.getY()-P1.getY())/(P2.getX()-P1.getX());
   }
-
-//  public List<Point> combineLists(List<Point> lst1, List<Point> lst2){
-//    List<Point> lst3 = new ArrayList<Point>();
-//    if (){
-//
-//    }else{
-//
-//    }
-//
-//    int minSize = (lst1.size()<=lst2.size() ? lst1.size() : lst2.size());
-//    for (int i=0; i<minSize; i++){
-//      if(!lst1.contains(lst2[i])){
-//        lst3.add(lst2[i]);
-//      };
-//    };
-//    lst1.addAll(lst2);
-//    return lst1;
-//  }
 
   public void recursiveIter(double tolerance, CartesianLine line1, CartesianLine line2, List<Point> listOfPoints){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
