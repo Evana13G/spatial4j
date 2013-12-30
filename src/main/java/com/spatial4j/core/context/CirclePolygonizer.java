@@ -1,10 +1,9 @@
-package com.spatial4j.core.context.jts;
+package com.spatial4j.core.context;
 
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.distance.CartesianDistCalc;
 import com.spatial4j.core.shape.CartesianLine;
 import com.spatial4j.core.shape.Circle;
@@ -21,7 +20,7 @@ public class CirclePolygonizer {
   public static void main(String[] args) {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
     CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx);
-    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(2);
+    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(0.1);
     for(int i=0;i<listOfPoints.size(); i++){
       System.out.print(listOfPoints.get(i));
       System.out.print('\n');
@@ -38,13 +37,15 @@ public class CirclePolygonizer {
 
   //Note: tolerance will eventually be the maximum distance away from circle
   // for now, we will use it as the number of iterations to use
-  public List<Point> getEnclosingPolygon(int tolerance){
+  public List<Point> getEnclosingPolygon(double tolerance){
     Point definingPoint1 = ctx.makePoint(circ.getCenter().getX(), circ.getCenter().getY()+circ.getRadius());
     Point definingPoint2 = ctx.makePoint(circ.getCenter().getX()+circ.getRadius(), circ.getCenter().getY());
     CartesianLine line_1 = new CartesianLineImpl (0.0, definingPoint1, this.ctx);
     CartesianLine line_2 = new CartesianLineImpl (10000000.0, definingPoint2, this.ctx);
 //    CartesianLine line_2 = new CartesianLineImpl (Double.POSITIVE_INFINITY, definingPoint2, this.ctx);
-    return recursiveIter(tolerance, line_1, line_2, new ArrayList<Point>());
+    ArrayList<Point> listOfPoints = new ArrayList<Point>();
+    recursiveIter(tolerance, line_1, line_2, listOfPoints);
+    return listOfPoints;
   }
 
 //  public CartesianLine iterate(CartesianLine line_1, CartesianLine line_2){
@@ -106,17 +107,17 @@ public class CirclePolygonizer {
 //    return lst1;
 //  }
 
-  public List<Point> recursiveIter(double tolerance, CartesianLine line1, CartesianLine line2, List<Point> listOfPoints){
+  public void recursiveIter(double tolerance, CartesianLine line1, CartesianLine line2, List<Point> listOfPoints){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
     double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
     if (currentMaxDistance <= tolerance){
       listOfPoints.add(lineIntersectionPoint);
-      return listOfPoints;
     } else {
       CartesianLine line3 = calcTangentLine(circleIntersectionPoint);
+      recursiveIter(tolerance, line1, line3, listOfPoints);
       listOfPoints.add(circleIntersectionPoint);
-      return recursiveIter(currentMaxDistance, line3, line2, recursiveIter(currentMaxDistance, line1, line3, listOfPoints) );
+      recursiveIter(tolerance, line3, line2,  listOfPoints);
     }
   }
 }
