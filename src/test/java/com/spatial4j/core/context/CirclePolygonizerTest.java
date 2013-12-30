@@ -7,10 +7,8 @@ import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.RandomizedShapeTest;
 import com.spatial4j.core.shape.impl.CartesianLineImpl;
-import com.spatial4j.core.shape.impl.PointImpl;
 import com.spatial4j.core.shape.impl.RectangleImpl;
 import org.junit.Test;
-import sun.net.www.content.text.plain;
 
 import java.util.ArrayList;
 
@@ -85,11 +83,43 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     assertEquals(expectedTangentLine.getSlope(), actualTangentLine.getSlope(), EPS);
     assertEquals(expectedTangentLine.getDefiningPoint(), actualTangentLine.getDefiningPoint());
-
   }
 
-//  public void testCalcSlope(){;}
-//  public void testRecursiveIter(){;}
+  @Test
+  public void testCalcSlope(){
+    Point point1 = ctx.makePoint(0,0);
+    Point point2 = ctx.makePoint(50, 50);
+    double actualSlope = polygonizer.calcSlope(point1, point2);
+    assertEquals(1, actualSlope, EPS);
+  }
+
+  @Test
+  public void testRecursiveIter(){
+    double tolerance = 1;
+    CartesianLine line1 = new CartesianLineImpl(0, ctx.makePoint(50,60), ctx);
+    CartesianLine line2 = new CartesianLineImpl(10000000, ctx.makePoint(60,50), ctx);
+    ArrayList<Point> listOfPoints = new ArrayList<Point>();
+    listOfPoints.add(ctx.makePoint(50.0,60.0));
+    listOfPoints.add(ctx.makePoint(60.0,60.0));
+    listOfPoints.add(ctx.makePoint(60.0,50.0));
+    ArrayList<Point> testListOfPoints = new ArrayList<Point>();
+    polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
+
+//    assertEquals(listOfPoints, testListOfPoints);
+
+    tolerance = 0.1;
+    listOfPoints.clear();
+    testListOfPoints.clear();
+    listOfPoints.add(ctx.makePoint(50.0,60.0));
+    listOfPoints.add(ctx.makePoint(60.0,60.0));
+    listOfPoints.add(ctx.makePoint(57.0710678118654755,57.0710678118654755));
+    listOfPoints.add(ctx.makePoint(60.0,60.0));
+    listOfPoints.add(ctx.makePoint(60.0,50.0));
+    polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
+
+//    assertEquals(listOfPoints, testListOfPoints);
+
+  }
 
 
 }
