@@ -43,7 +43,7 @@ public class InfBufLine {
 
   private final double distDenomInv;//cached: 1 / Math.sqrt(slope * slope + 1)
 
-  InfBufLine(double slope, Point point, double buf) {
+  public InfBufLine(double slope, Point point, double buf) {
     assert !Double.isNaN(slope);
     this.slope = slope;
     if (Double.isInfinite(slope)) {
