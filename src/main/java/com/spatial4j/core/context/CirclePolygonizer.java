@@ -48,9 +48,9 @@ public class CirclePolygonizer {
   }
 
   public Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
-    if(equals(line1, line2)){
+    if(line1.equals(line2)){
       //should really throw an exception here
-      return Double.POSITIVE_INFINITY
+      return Double.POSITIVE_INFINITY;
     }
     if(Double.isInfinite(line1.getSlope())){
       double X = line1.getIntercept();
@@ -87,7 +87,7 @@ public class CirclePolygonizer {
   }
 
   public InfBufLine calcTangentLine(Point pt){
-    return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter())), pt), pt, 0);
+    return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter()), pt), pt, 0);
   }
 
   public double calcSlope(Point P1, Point P2){
