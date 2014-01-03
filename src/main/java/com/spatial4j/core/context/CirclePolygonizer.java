@@ -23,7 +23,6 @@ public class CirclePolygonizer {
 //      System.out.print(listOfPoints.get(i));
 //      System.out.print('\n');
 //    }
-
   }
 
   protected SpatialContext ctx;
@@ -40,31 +39,35 @@ public class CirclePolygonizer {
     Point definingPoint2 = ctx.makePoint(circ.getCenter().getX()+circ.getRadius(), circ.getCenter().getY());
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
-    //InfBufLine line2 = new InfBufLine (10000000.0, definingPoint2, 0);
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
-
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
-
     listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line1, line2, listOfPoints);
     listOfPoints.add(definingPoint2);
     return listOfPoints;
   }
 
-//  public Point calcLineIntersection(InfBufLine L1, InfBufLine L2){
-//    double X = ((L1.getSlope()*L1.getDefiningPoint().getX()) - L1.getDefiningPoint().getY() -
-//                (L2.getSlope()*L2.getDefiningPoint().getX()) + L2.getDefiningPoint().getY() )
-//                /(L1.getSlope() - L2.getSlope());
-//    double Y = (L1.getSlope()*(X - L1.getDefiningPoint().getX())) + L1.getDefiningPoint().getY();
-//    return new PointImpl(X, Y, ctx);
-//  }
-  public Point calcLineIntersection(InfBufLine L1, InfBufLine L2){
-    double X = (L2.getIntercept() - L1.getIntercept())/(L1.getSlope()-L2.getSlope());
-    double Y = L1.getSlope() * X + L1.getIntercept();
+  public Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
+    if(equals(line1, line2)){
+      //should really throw an exception here
+      return Double.POSITIVE_INFINITY
+    }
+    if(Double.isInfinite(line1.getSlope())){
+      double X = line1.getIntercept();
+      double Y = line2.getSlope()*X + line2.getIntercept();
+      return new PointImpl(X, Y, ctx);
+    }else if(Double.isInfinite(line2.getSlope())){
+      double X = line2.getIntercept();
+      double Y = line1.getSlope()*X + line1.getIntercept();
+      return new PointImpl(X, Y, ctx);
+    }else if(Double.isInfinite(line1.getSlope()) && Double.isInfinite(line2.getSlope())){
+      //Should throw an exception here
+      return Double.NaN;
+    }
+    double X = (line2.getIntercept() - line1.getIntercept())/(line1.getSlope()-line2.getSlope());
+    double Y = line1.getSlope() * X + line1.getIntercept();
     return new PointImpl(X, Y, ctx);
   }
-
-
 
   public Point calcCircleIntersection(InfBufLine line){
     double radius = circ.getRadius();
@@ -84,14 +87,24 @@ public class CirclePolygonizer {
   }
 
   public InfBufLine calcTangentLine(Point pt){
-    return new InfBufLine(-1/calcSlope(circ.getCenter(), pt), pt, 0);
+    return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter())), pt), pt, 0);
   }
 
   public double calcSlope(Point P1, Point P2){
-    return (P2.getY()-P1.getY())/(P2.getX()-P1.getX());
+    double changeInY = P2.getY()-P1.getY();
+    double changeInX = P2.getX()-P1.getX();
+    if(changeInX == 0){
+      return Double.NaN;
+    }
+    return changeInY/changeInX;
   }
 
   public double getPerpSlope(double slope){
+    if(Double.isInfinite(slope)){
+      return 0;
+    }else if(slope == 0){
+      return Double.POSITIVE_INFINITY;
+    }
     return -1/slope;
   }
 
