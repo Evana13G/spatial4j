@@ -50,7 +50,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     ArrayList<Point> testListOfPoints = new ArrayList<Point>();
     polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
 //    assertEquals(listOfPoints, testListOfPoints);
-
   }
 
   @Test
@@ -60,16 +59,46 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     InfBufLine line1 = new InfBufLine(1, point1, 0);
     InfBufLine line2 = new InfBufLine(-1, point2, 0);
+    assertEquals(ctx.makePoint(50, 50), polygonizer.calcLineIntersection(line1, line2));
 
-    assertEquals(50, polygonizer.calcLineIntersection(line1, line2).getX(), EPS);
-    assertEquals(50, polygonizer.calcLineIntersection(line1, line2).getY(), EPS);
+    InfBufLine line3 = new InfBufLine(Double.POSITIVE_INFINITY, point1, 0);
+    InfBufLine line4 = new InfBufLine(Double.POSITIVE_INFINITY, point2, 0);
+    assertEquals(ctx.makePoint(Double.NaN, Double.NaN), polygonizer.calcLineIntersection(line3, line4));
+
+    point1.reset(25, 0);
+    point2.reset(75, 0);
+
+    InfBufLine line5 = new InfBufLine(1, point1, 0);
+    InfBufLine line6 = new InfBufLine(1, point2, 0);
+    assertEquals(ctx.makePoint(Double.NaN, Double.NaN), polygonizer.calcLineIntersection(line5, line6));
+
+
+    InfBufLine line7 = new InfBufLine(1, point1, 0);
+    InfBufLine line8 = new InfBufLine(Double.POSITIVE_INFINITY, point2, 0);
+    assertEquals(ctx.makePoint(75, 50), polygonizer.calcLineIntersection(line7, line8));
+
   }
 
   @Test
   public void testCalcCircleIntersection(){
-    Point point1 = ctx.makePoint(0,0);
+
+    //Test with a point from all four quadrants
+    Point point1 = ctx.makePoint(100,100);
     InfBufLine line1 = new InfBufLine(1, point1, 0);
     assertEquals(ctx.makePoint(57.0710678118654755,57.0710678118654755), polygonizer.calcCircleIntersection(line1));
+
+    point1.reset(100, 0);
+    InfBufLine line2 = new InfBufLine(1, point1, 0);
+    assertEquals(ctx.makePoint(57.0710678118654755,42.9289321881345), polygonizer.calcCircleIntersection(line2));
+
+    point1.reset(0,0);
+    InfBufLine line3 = new InfBufLine(1, point1, 0);
+    assertEquals(ctx.makePoint(42.9289321881345,42.9289321881345), polygonizer.calcCircleIntersection(line2));
+
+    point1.reset(0,100);
+    InfBufLine line4 = new InfBufLine(1, point1, 0);
+    assertEquals(ctx.makePoint(42.9289321881345,57.0710678118654755), polygonizer.calcCircleIntersection(line2));
+
   }
 
   //@Test

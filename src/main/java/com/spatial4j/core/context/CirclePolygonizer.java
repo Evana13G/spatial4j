@@ -39,6 +39,7 @@ public class CirclePolygonizer {
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
+    System.out.print(line2);
 
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
     //listOfPoints.add(definingPoint1);
@@ -48,12 +49,13 @@ public class CirclePolygonizer {
   }
 
   public Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
+
     if(line1.equals(line2)){
-      //should really throw an exception here
-      //what should I return here??? *****
       return ctx.makePoint(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-    }
-    if(Double.isInfinite(line1.getSlope())){
+    } else if(line1.getSlope() == line2.getSlope()){
+      //Should throw an exception here
+      return ctx.makePoint(Double.NaN, Double.NaN);
+    }else if(Double.isInfinite(line1.getSlope())){
       double X = line1.getIntercept();
       double Y = line2.getSlope()*X + line2.getIntercept();
       return new PointImpl(X, Y, ctx);
@@ -61,13 +63,11 @@ public class CirclePolygonizer {
       double X = line2.getIntercept();
       double Y = line1.getSlope()*X + line1.getIntercept();
       return new PointImpl(X, Y, ctx);
-    }else if(Double.isInfinite(line1.getSlope()) && Double.isInfinite(line2.getSlope())){
-      //Should throw an exception here
-      return ctx.makePoint(Double.NaN, Double.NaN);
+    }else{
+      double X = (line2.getIntercept() - line1.getIntercept())/(line1.getSlope()-line2.getSlope());
+      double Y = line1.getSlope()*X + line1.getIntercept();
+      return new PointImpl(X, Y, ctx);
     }
-    double X = (line2.getIntercept() - line1.getIntercept())/(line1.getSlope()-line2.getSlope());
-    double Y = line1.getSlope()*X + line1.getIntercept();
-    return new PointImpl(X, Y, ctx);
   }
 
   public Point calcCircleIntersection(InfBufLine line){
