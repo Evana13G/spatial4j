@@ -155,6 +155,33 @@ public class InfBufLine {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    InfBufLine that = (InfBufLine) o;
+
+    if (Double.compare(that.buf, buf) != 0) return false;
+    if (Double.compare(that.intercept, intercept) != 0) return false;
+    if (Double.compare(that.slope, slope) != 0) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result;
+    long temp;
+    temp = Double.doubleToLongBits(slope);
+    result = (int) (temp ^ (temp >>> 32));
+    temp = Double.doubleToLongBits(intercept);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    temp = Double.doubleToLongBits(buf);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    return result;
+  }
+
+  @Override
   public String toString() {
     return "InfBufLine{" +
         "buf=" + buf +
