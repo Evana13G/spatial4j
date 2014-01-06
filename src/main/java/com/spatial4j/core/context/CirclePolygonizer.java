@@ -17,12 +17,12 @@ public class CirclePolygonizer {
   public static void main(String[] args) {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx, circle);
-    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(0.1);
-    for(int i=0;i<listOfPoints.size(); i++){
-      System.out.print(listOfPoints.get(i));
-      System.out.print('\n');
-    }
+    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
+//    List<Point> listOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
+//    for(int i=0;i<listOfPoints.size(); i++){
+//      System.out.print(listOfPoints.get(i));
+//      System.out.print('\n');
+//    }
   }
 
   protected SpatialContext ctx;
@@ -39,7 +39,6 @@ public class CirclePolygonizer {
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
-    System.out.print(line2);
 
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
     //listOfPoints.add(definingPoint1);
@@ -71,6 +70,7 @@ public class CirclePolygonizer {
   }
 
   public Point calcCircleIntersection(InfBufLine line){
+
     double radius = circ.getRadius();
     double theta = Math.atan(line.getSlope());
     double X = (radius*Math.cos(theta)) + circ.getCenter().getX();
@@ -78,10 +78,42 @@ public class CirclePolygonizer {
     return new PointImpl(X, Y, ctx);
   }
 
+  public int getQuadrant(Point point){
+    //5=axis
+    //6=error code
+    Point center = circ.getCenter();
+    double X = point.getX();
+    double Y = point.getY();
+    double cX = center.getX();
+    double cY = center.getY();
+    if(X>cX){
+      if(Y>cY){return 1;}
+      if(Y<cY){return 4;}
+      if(Y==cY){return 5;}
+    }
+    if(X<cX){
+      if(Y>cY){return 2;}
+      if(Y<cY){return 3;}
+      if(Y==cY){return 5;}
+    }
+    if(X==cX){
+      if(Y>cY){return 5;}
+      if(Y<cY){return 5;}
+      if(Y==cY){return 5;}
+    }
+    return 6;
+  }
+
   public Point calcCircleIntersection(Point point){
+    int quadrant = getQuadrant(point);
     double radius = circ.getRadius();
     double slope = calcSlope(circ.getCenter(), point);
     double theta = Math.atan(slope);
+    if(quadrant == 2){
+      theta = Math.PI + theta;
+    }else if(quadrant == 3){
+      theta = Math.PI + theta;
+    }
     double X = radius*Math.cos(theta) + circ.getCenter().getX();
     double Y = radius*Math.sin(theta) + circ.getCenter().getY();
     return new PointImpl(X, Y, ctx);
@@ -91,11 +123,14 @@ public class CirclePolygonizer {
     return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter(), pt)), pt, 0);
   }
 
-  public double calcSlope(Point P1, Point P2){
-    double changeInY = P2.getY()-P1.getY();
-    double changeInX = P2.getX()-P1.getX();
-    if(changeInX == 0){
+  public double calcSlope(Point point1, Point point2){
+    if(point1.equals(point2)){
       return Double.NaN;
+    }
+    double changeInY = point2.getY()-point1.getY();
+    double changeInX = point2.getX()-point1.getX();
+    if(changeInX == 0){
+      return Double.POSITIVE_INFINITY;
     }
     return changeInY/changeInX;
   }
@@ -110,9 +145,6 @@ public class CirclePolygonizer {
   }
 
   public void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> listOfPoints){
-    System.out.print(line1);
-    System.out.print(line2);
-    System.out.print('\n');
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
     double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
@@ -125,21 +157,4 @@ public class CirclePolygonizer {
       recursiveIter(tolerance, line3, line2,  listOfPoints);
     }
   }
-
-//  to create a BufferedLine from a point and slope
-//  public BufferedLine createBufferedLine(Point point, double slope, double buff, SpatialContext ctx){
-//    double interceptYvalue = point.getY() - (slope*point.getX());
-//    Point interceptPoint = ctx.makePoint(0, interceptYvalue);
-//    if(equals(interceptPoint, point)){
-//      //get an alternative point at x = 1
-//      //because we know this cannot be the same point as the intercept point
-//      //since x=0 at the intercept point
-//      double alternativeYvalue = slope + interceptYvalue;
-//      Point alternativePoint = ctx.makePoint(1, alternativeYvalue);
-//      return new BufferedLine(point, alternativePoint, 0, ctx);
-//    }
-//    return new BufferedLine(point, interceptPoint, 0, ctx);
-//  }
-
-
 }

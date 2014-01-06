@@ -82,22 +82,21 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   @Test
   public void testCalcCircleIntersection(){
 
+    //need to test calcCircleIntersection with a line as an arg?
+    //Might wipe that function
+
     //Test with a point from all four quadrants
     Point point1 = ctx.makePoint(100,100);
-    InfBufLine line1 = new InfBufLine(1, point1, 0);
-    assertEquals(ctx.makePoint(57.0710678118654755,57.0710678118654755), polygonizer.calcCircleIntersection(line1));
+    assertEquals(ctx.makePoint(57.0710678118654755,57.0710678118654755), polygonizer.calcCircleIntersection(point1));
 
     point1.reset(100, 0);
-    InfBufLine line2 = new InfBufLine(1, point1, 0);
-    assertEquals(ctx.makePoint(57.0710678118654755,42.9289321881345), polygonizer.calcCircleIntersection(line2));
+    assertEquals(ctx.makePoint(57.0710678118654755,42.928932188134524), polygonizer.calcCircleIntersection(point1));
 
     point1.reset(0,0);
-    InfBufLine line3 = new InfBufLine(1, point1, 0);
-    assertEquals(ctx.makePoint(42.9289321881345,42.9289321881345), polygonizer.calcCircleIntersection(line2));
+    assertEquals(ctx.makePoint(42.928932188134524,42.928932188134524), polygonizer.calcCircleIntersection(point1));
 
     point1.reset(0,100);
-    InfBufLine line4 = new InfBufLine(1, point1, 0);
-    assertEquals(ctx.makePoint(42.9289321881345,57.0710678118654755), polygonizer.calcCircleIntersection(line2));
+    assertEquals(ctx.makePoint(42.928932188134524,57.0710678118654755), polygonizer.calcCircleIntersection(point1));
 
   }
 
@@ -105,24 +104,45 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   public void testCalcTangentLine(){
     //given the argument of a point on the circle
     //(passed a point found using 'calcCircleIntersection')
+    //need to test for any random pt on the circle
     Point pt = ctx.makePoint(50, 60);
 
     InfBufLine expectedTangentLine = new InfBufLine(0, pt, 0);
     InfBufLine actualTangentLine = polygonizer.calcTangentLine(pt);
 
-    //does this not test out because there is no assertEquals(CartesianLine, CartesianLine); ???
-    //assertEquals(expectedTangentLine, actualTangentLine);
+    assertEquals(expectedTangentLine.getSlope(), actualTangentLine.getSlope(), EPS);
+    assertEquals(expectedTangentLine.getIntercept(), actualTangentLine.getIntercept(), EPS);
 
-    //assertEquals(expectedTangentLine.getSlope(), actualTangentLine.getSlope(), EPS);
-    //assertEquals(expectedTangentLine.getIntercept(), actualTangentLine.getIntercept(), EPS);
+    pt.reset(57.0710678118654755,57.0710678118654755);
+    InfBufLine expectedTangentLine2 = new InfBufLine(-1, pt, 0);
+    InfBufLine actualTangentLine2 = polygonizer.calcTangentLine(pt);
+
+    assertEquals(expectedTangentLine2.getSlope(), actualTangentLine2.getSlope(), EPS);
+    assertEquals(expectedTangentLine2.getIntercept(), actualTangentLine2.getIntercept(), EPS);
+
+    pt.reset(42.928932188134524,57.0710678118654755);
+    InfBufLine expectedTangentLine3 = new InfBufLine(-1, pt, 0);
+    InfBufLine actualTangentLine3 = polygonizer.calcTangentLine(pt);
+
+    assertEquals(expectedTangentLine3.getSlope(), actualTangentLine3.getSlope(), EPS);
+    assertEquals(expectedTangentLine3.getIntercept(), actualTangentLine3.getIntercept(), EPS);
+
   }
 
   @Test
   public void testCalcSlope(){
     Point point1 = ctx.makePoint(0,0);
     Point point2 = ctx.makePoint(50, 50);
-    double actualSlope = polygonizer.calcSlope(point1, point2);
-    assertEquals(1, actualSlope, EPS);
+    assertEquals(1, polygonizer.calcSlope(point1, point2), EPS);
+
+    point2.reset(50, 0);
+    assertEquals(0, polygonizer.calcSlope(point1, point2), EPS);
+
+    point2.reset(0, 50);
+    assertEquals(Double.POSITIVE_INFINITY, polygonizer.calcSlope(point1, point2), EPS);
+
+    point2.reset(0, 0);
+    assertEquals(Double.NaN, polygonizer.calcSlope(point1, point2), EPS);
   }
 
   @Test
@@ -137,7 +157,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     ArrayList<Point> testListOfPoints = new ArrayList<Point>();
     polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
 
-//    assertEquals(listOfPoints, testListOfPoints);
+    //assertEquals(listOfPoints, testListOfPoints);
 
     tolerance = 0.1;
     listOfPoints.clear();
@@ -149,6 +169,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     listOfPoints.add(ctx.makePoint(60.0,50.0));
     polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
 
-  //  assertEquals(listOfPoints, testListOfPoints);
+    //assertEquals(listOfPoints, testListOfPoints);
   }
 }
