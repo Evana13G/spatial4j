@@ -16,13 +16,13 @@ public class CirclePolygonizer {
 
   public static void main(String[] args) {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
-//    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-//    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx, circle);
-//    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(1);
-//    for(int i=0;i<listOfPoints.size(); i++){
-//      System.out.print(listOfPoints.get(i));
-//      System.out.print('\n');
-//    }
+    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
+    CirclePolygonizer CirclePolygonizerTest = new CirclePolygonizer(ctx, circle);
+    List<Point> listOfPoints = CirclePolygonizerTest.getEnclosingPolygon(0.1);
+    for(int i=0;i<listOfPoints.size(); i++){
+      System.out.print(listOfPoints.get(i));
+      System.out.print('\n');
+    }
   }
 
   protected SpatialContext ctx;
@@ -34,23 +34,24 @@ public class CirclePolygonizer {
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
-
     Point definingPoint1 = ctx.makePoint(circ.getCenter().getX(), circ.getCenter().getY()+circ.getRadius());
     Point definingPoint2 = ctx.makePoint(circ.getCenter().getX()+circ.getRadius(), circ.getCenter().getY());
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
+
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
-    listOfPoints.add(definingPoint1);
+    //listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line1, line2, listOfPoints);
-    listOfPoints.add(definingPoint2);
+    //listOfPoints.add(definingPoint2);
     return listOfPoints;
   }
 
   public Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
     if(line1.equals(line2)){
       //should really throw an exception here
-      return Double.POSITIVE_INFINITY;
+      //what should I return here??? *****
+      return ctx.makePoint(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
     }
     if(Double.isInfinite(line1.getSlope())){
       double X = line1.getIntercept();
@@ -62,10 +63,10 @@ public class CirclePolygonizer {
       return new PointImpl(X, Y, ctx);
     }else if(Double.isInfinite(line1.getSlope()) && Double.isInfinite(line2.getSlope())){
       //Should throw an exception here
-      return Double.NaN;
+      return ctx.makePoint(Double.NaN, Double.NaN);
     }
     double X = (line2.getIntercept() - line1.getIntercept())/(line1.getSlope()-line2.getSlope());
-    double Y = line1.getSlope() * X + line1.getIntercept();
+    double Y = line1.getSlope()*X + line1.getIntercept();
     return new PointImpl(X, Y, ctx);
   }
 
@@ -87,7 +88,7 @@ public class CirclePolygonizer {
   }
 
   public InfBufLine calcTangentLine(Point pt){
-    return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter()), pt), pt, 0);
+    return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter(), pt)), pt, 0);
   }
 
   public double calcSlope(Point P1, Point P2){
@@ -109,6 +110,9 @@ public class CirclePolygonizer {
   }
 
   public void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> listOfPoints){
+    System.out.print(line1);
+    System.out.print(line2);
+    System.out.print('\n');
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
     double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
@@ -122,7 +126,7 @@ public class CirclePolygonizer {
     }
   }
 
-  //to create a BufferedLine from a point and slope
+//  to create a BufferedLine from a point and slope
 //  public BufferedLine createBufferedLine(Point point, double slope, double buff, SpatialContext ctx){
 //    double interceptYvalue = point.getY() - (slope*point.getX());
 //    Point interceptPoint = ctx.makePoint(0, interceptYvalue);
