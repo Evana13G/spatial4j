@@ -18,11 +18,11 @@ public class CirclePolygonizer {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
-//    List<Point> listOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
-//    for(int i=0;i<listOfPoints.size(); i++){
-//      System.out.print(listOfPoints.get(i));
-//      System.out.print('\n');
-//    }
+    List<Point> listOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
+    for(int i=0;i<listOfPoints.size(); i++){
+      System.out.print(listOfPoints.get(i));
+      System.out.print('\n');
+    }
   }
 
   protected SpatialContext ctx;
