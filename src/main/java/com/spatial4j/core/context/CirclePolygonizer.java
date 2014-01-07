@@ -47,6 +47,20 @@ public class CirclePolygonizer {
     return listOfPoints;
   }
 
+  public void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> listOfPoints){
+    Point lineIntersectionPoint = calcLineIntersection(line1, line2);
+    Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
+    double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
+    if (currentMaxDistance <= tolerance){
+      listOfPoints.add(lineIntersectionPoint);
+    } else {
+      InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
+      recursiveIter(tolerance, line1, line3, listOfPoints);
+      listOfPoints.add(circleIntersectionPoint);
+      recursiveIter(tolerance, line3, line2,  listOfPoints);
+    }
+  }
+
   public Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
 
     if(line1.equals(line2)){
@@ -69,51 +83,11 @@ public class CirclePolygonizer {
     }
   }
 
-  public Point calcCircleIntersection(InfBufLine line){
-
-    double radius = circ.getRadius();
-    double theta = Math.atan(line.getSlope());
-    double X = (radius*Math.cos(theta)) + circ.getCenter().getX();
-    double Y = (radius*Math.sin(theta)) + circ.getCenter().getY();
-    return new PointImpl(X, Y, ctx);
-  }
-
-  public int getQuadrant(Point point){
-    //5=axis
-    //6=error code
-    Point center = circ.getCenter();
-    double X = point.getX();
-    double Y = point.getY();
-    double cX = center.getX();
-    double cY = center.getY();
-    if(X>cX){
-      if(Y>cY){return 1;}
-      if(Y<cY){return 4;}
-      if(Y==cY){return 5;}
-    }
-    if(X<cX){
-      if(Y>cY){return 2;}
-      if(Y<cY){return 3;}
-      if(Y==cY){return 5;}
-    }
-    if(X==cX){
-      if(Y>cY){return 5;}
-      if(Y<cY){return 5;}
-      if(Y==cY){return 5;}
-    }
-    return 6;
-  }
-
+  //assumed that point is outside circle
   public Point calcCircleIntersection(Point point){
-    int quadrant = getQuadrant(point);
     double radius = circ.getRadius();
     double slope = calcSlope(circ.getCenter(), point);
     double theta = Math.atan(slope);
-    if(quadrant == 2){
-      theta = Math.PI + theta;
-    }else if(quadrant == 3){
-      theta = Math.PI + theta;
-    }
     double X = radius*Math.cos(theta) + circ.getCenter().getX();
     double Y = radius*Math.sin(theta) + circ.getCenter().getY();
     return new PointImpl(X, Y, ctx);
@@ -144,17 +118,4 @@ public class CirclePolygonizer {
     return -1/slope;
   }
 
-  public void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> listOfPoints){
-    Point lineIntersectionPoint = calcLineIntersection(line1, line2);
-    Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
-    double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
-    if (currentMaxDistance <= tolerance){
-      listOfPoints.add(lineIntersectionPoint);
-    } else {
-      InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
-      recursiveIter(tolerance, line1, line3, listOfPoints);
-      listOfPoints.add(circleIntersectionPoint);
-      recursiveIter(tolerance, line3, line2,  listOfPoints);
-    }
-  }
 }

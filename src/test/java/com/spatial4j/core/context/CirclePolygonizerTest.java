@@ -10,6 +10,7 @@ import com.spatial4j.core.shape.impl.RectangleImpl;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by egizzi on 12/27/13.
@@ -81,7 +82,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   @Test
   public void testCalcCircleIntersection(){
-
     //need to test calcCircleIntersection with a line as an arg?
     //Might wipe that function
 
@@ -91,13 +91,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     point1.reset(100, 0);
     assertEquals(ctx.makePoint(57.0710678118654755,42.928932188134524), polygonizer.calcCircleIntersection(point1));
-
-    point1.reset(0,0);
-    assertEquals(ctx.makePoint(42.928932188134524,42.928932188134524), polygonizer.calcCircleIntersection(point1));
-
-    point1.reset(0,100);
-    assertEquals(ctx.makePoint(42.928932188134524,57.0710678118654755), polygonizer.calcCircleIntersection(point1));
-
   }
 
   //@Test
@@ -174,29 +167,30 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   @Test
   public void testIsTrueTangent(){
-    double DISTANCE = 0.1; //this denotes epsilon boundary on x value, not and epsilon dist from the point
-                           //much less expensive this way
-    /*MATH FOR EPSILON DIST
-    Solve for x and y coordinates using x^2 + y^2 = DIST^2 and y=mx+b
-    Substitution: x^2+(mx+b)^2=DIST^2
-                  x^2(1 + m^2) + x(2mb) + (b^2 - DIST^2) = 0
+    double DISTANCE = 0.0001;
 
-                  with a = 1 + m^2
-                       b = 2mb
-                       c = b^2 - DIST^2
-                  Solve for x using quadratic formula, and then plug that x value back into y=mx+b to find y.
-    */
     Point point = ctx.makePoint(randomIntBetween(51, 99), randomIntBetween(51, 99));
     Point tangentPoint = polygonizer.calcCircleIntersection(point);
     InfBufLine tangentLine = polygonizer.calcTangentLine(tangentPoint);
+
+    List <Point> pointsToTest = getCoordinatesGivenDistance(DISTANCE, tangentLine);
+    Point point1 = pointsToTest.get(0);
+    Point point2 = pointsToTest.get(1);
+
+    System.out.print(pointsToTest);
+
+    //assertEquals(true, isOutsideCircle(point1));
+    //assertEquals(true, isOutsideCircle(point2));
+    //assertEquals(false, isOutsideCircle(tangentPoint));
+
     double Xpos = tangentPoint.getX() + DISTANCE;
     double Xneg = tangentPoint.getX() - DISTANCE;
     double Ypos = tangentLine.getSlope()*Xpos + tangentLine.getIntercept();
     double Yneg = tangentLine.getSlope()*Xneg + tangentLine.getIntercept();
 
-    assertEquals(isOutsideCircle(ctx.makePoint(Xpos, Ypos)), true);
-    assertEquals(isOutsideCircle(ctx.makePoint(Xneg, Yneg)), true);
-    assertEquals(isOutsideCircle(tangentPoint), false);
+    assertEquals(true, isOutsideCircle(ctx.makePoint(Xpos, Ypos)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(Xneg, Yneg)));
+    assertEquals(false, isOutsideCircle(tangentPoint));
 
     tangentPoint.reset(50, 60);
     InfBufLine tangentLine1 = polygonizer.calcTangentLine(tangentPoint);
@@ -205,9 +199,9 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     Ypos = tangentLine1.getSlope()*Xpos + tangentLine1.getIntercept();
     Yneg = tangentLine1.getSlope()*Xneg + tangentLine1.getIntercept();
 
-    assertEquals(isOutsideCircle(ctx.makePoint(Xpos, Ypos)), true);
-    assertEquals(isOutsideCircle(ctx.makePoint(Xneg, Yneg)), true);
-    assertEquals(isOutsideCircle(tangentPoint), false);
+    assertEquals(true, isOutsideCircle(ctx.makePoint(Xpos, Ypos)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(Xneg, Yneg)));
+    assertEquals(false, isOutsideCircle(tangentPoint));
 
     tangentPoint.reset(60, 50);
     InfBufLine tangentLine2 = polygonizer.calcTangentLine(tangentPoint);
@@ -216,18 +210,35 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     Ypos = tangentPoint.getX()+DISTANCE;
     Yneg = tangentPoint.getX()-DISTANCE;
 
-    assertEquals(isOutsideCircle(ctx.makePoint(Xpos, Ypos)), true);
-    assertEquals(isOutsideCircle(ctx.makePoint(Xneg, Yneg)), true);
-    assertEquals(isOutsideCircle(tangentPoint), false);
+    assertEquals(true, isOutsideCircle(ctx.makePoint(Xpos, Ypos)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(Xneg, Yneg)));
+    assertEquals(false, isOutsideCircle(tangentPoint));
   }
 
   public boolean isOutsideCircle(Point point){
-    double X = point.getX()-circ.getCenter().getX();
-    double Y = point.getY()-circ.getCenter().getY();
+    double epsilon = .000000000000003;
     double radius = circ.getRadius();
-    if((X*X+Y*Y) > radius*radius){
+    double pointDistanceFromCenter = ctx.getDistCalc().distance(circ.getCenter(), point)-epsilon;
+    if(pointDistanceFromCenter > radius){
       return true;
     }
     return false;
   }
+
+  public List<Point> getCoordinatesGivenDistance(double distance, InfBufLine line){
+    double radius = circ.getRadius();
+    double centerToPoint = distance*distance + radius*radius;
+    double theta1 = Math.atan(centerToPoint);
+    double theta2 = Math.PI/2 - theta1;
+    double X1 = radius*Math.cos(theta1) + circ.getCenter().getX();
+    double Y1 = radius*Math.sin(theta1) + circ.getCenter().getY();
+    double X2 = radius*Math.cos(theta2) + circ.getCenter().getX();
+    double Y2 = radius*Math.sin(theta2) + circ.getCenter().getY();
+
+    ArrayList<Point> listOfPoints = new ArrayList<Point>();
+    listOfPoints.add(ctx.makePoint(X1, Y1));
+    listOfPoints.add(ctx.makePoint(X2, Y2));
+    return listOfPoints;
+  }
+
 }
