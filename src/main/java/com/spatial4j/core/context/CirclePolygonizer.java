@@ -41,9 +41,9 @@ public class CirclePolygonizer {
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
 
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
-    //listOfPoints.add(definingPoint1);
+    listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line1, line2, listOfPoints);
-    //listOfPoints.add(definingPoint2);
+//    listOfPoints.add(definingPoint2);
     return listOfPoints;
   }
 
@@ -117,5 +117,6 @@ public class CirclePolygonizer {
     }
     return -1/slope;
   }
+
 
 }

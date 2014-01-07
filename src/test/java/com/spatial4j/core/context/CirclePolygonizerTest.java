@@ -175,11 +175,11 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     List <Point> pointsToTest = getCoordinatesGivenDistance(DISTANCE, tangentLine);
     Point point1 = pointsToTest.get(0);
-    Point point2 = pointsToTest.get(1);
+   // Point point2 = pointsToTest.get(1);
 
     System.out.print(pointsToTest);
 
-    //assertEquals(true, isOutsideCircle(point1));
+    assertEquals(true, isOutsideCircle(point1));
     //assertEquals(true, isOutsideCircle(point2));
     //assertEquals(false, isOutsideCircle(tangentPoint));
 
@@ -227,17 +227,17 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   public List<Point> getCoordinatesGivenDistance(double distance, InfBufLine line){
     double radius = circ.getRadius();
-    double centerToPoint = distance*distance + radius*radius;
-    double theta1 = Math.atan(centerToPoint);
-    double theta2 = Math.PI/2 - theta1;
-    double X1 = radius*Math.cos(theta1) + circ.getCenter().getX();
-    double Y1 = radius*Math.sin(theta1) + circ.getCenter().getY();
-    double X2 = radius*Math.cos(theta2) + circ.getCenter().getX();
-    double Y2 = radius*Math.sin(theta2) + circ.getCenter().getY();
+    double centerToPoint = Math.sqrt(distance*distance + radius*radius);
+    double theta1 = polygonizer.getPerpSlope(line.getSlope());
+
+    double X1 = centerToPoint*Math.cos(theta1) + circ.getCenter().getX();
+    double Y1 = centerToPoint*Math.sin(theta1) + circ.getCenter().getY();
+    //double X2 = sqrtCenterToPoint*Math.cos(theta2) + circ.getCenter().getX();
+    //double Y2 = sqrtCenterToPoint*Math.sin(theta2) + circ.getCenter().getY();
 
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
     listOfPoints.add(ctx.makePoint(X1, Y1));
-    listOfPoints.add(ctx.makePoint(X2, Y2));
+    //listOfPoints.add(ctx.makePoint(X2, Y2));
     return listOfPoints;
   }
 
