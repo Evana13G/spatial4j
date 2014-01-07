@@ -196,6 +196,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     assertEquals(isOutsideCircle(ctx.makePoint(Xpos, Ypos)), true);
     assertEquals(isOutsideCircle(ctx.makePoint(Xneg, Yneg)), true);
+    assertEquals(isOutsideCircle(tangentPoint), false);
 
     tangentPoint.reset(50, 60);
     InfBufLine tangentLine1 = polygonizer.calcTangentLine(tangentPoint);
@@ -206,6 +207,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     assertEquals(isOutsideCircle(ctx.makePoint(Xpos, Ypos)), true);
     assertEquals(isOutsideCircle(ctx.makePoint(Xneg, Yneg)), true);
+    assertEquals(isOutsideCircle(tangentPoint), false);
 
     tangentPoint.reset(60, 50);
     InfBufLine tangentLine2 = polygonizer.calcTangentLine(tangentPoint);
@@ -216,12 +218,12 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     assertEquals(isOutsideCircle(ctx.makePoint(Xpos, Ypos)), true);
     assertEquals(isOutsideCircle(ctx.makePoint(Xneg, Yneg)), true);
-
+    assertEquals(isOutsideCircle(tangentPoint), false);
   }
 
   public boolean isOutsideCircle(Point point){
-    double X = point.getX();
-    double Y = point.getY();
+    double X = point.getX()-circ.getCenter().getX();
+    double Y = point.getY()-circ.getCenter().getY();
     double radius = circ.getRadius();
     if((X*X+Y*Y) > radius*radius){
       return true;
