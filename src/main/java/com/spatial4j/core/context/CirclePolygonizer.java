@@ -20,33 +20,7 @@ public class CirclePolygonizer {
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
 
     List<Point> lstOfPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
-    double xBound = circle.getCenter().getX();
-    double yBound = circle.getCenter().getY();
-    double X = 0;
-    double Y = 0;
 
-    int lstSize = lstOfPoints.size();
-    for(int i=lstSize-1;i>0; i--){
-      X = (lstOfPoints.get(i).getX());
-      Y =  yBound - (lstOfPoints.get(i).getY()-yBound);
-      Point point = ctx.makePoint(X, Y);
-      lstOfPoints.add(point);
-    }
-
-    lstSize = lstOfPoints.size();
-    for(int i=lstSize-2;i>0; i--){
-      X =  xBound - (lstOfPoints.get(i).getX()-xBound);
-      Y = (lstOfPoints.get(i).getY());
-      Point point = ctx.makePoint(X, Y);
-      lstOfPoints.add(point);
-    }
-
-    //print points
-    System.out.print("polygon points\n");
-    for(int i=0;i<lstOfPoints.size(); i++){
-      System.out.print(lstOfPoints.get(i));
-      System.out.print('\n');
-    }
   }
 
   protected SpatialContext ctx;
@@ -68,10 +42,15 @@ public class CirclePolygonizer {
     listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line1, line2, listOfPoints);
     listOfPoints.add(definingPoint2);
+
+    translatePoints(listOfPoints);
+
+    printListOfPoints(listOfPoints);
+
     return listOfPoints;
   }
 
-  public void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> listOfPoints){
+  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> listOfPoints){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
     double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
@@ -85,7 +64,7 @@ public class CirclePolygonizer {
     }
   }
 
-  public Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
+  protected Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
 
     if(line1.equals(line2)){
       return ctx.makePoint(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
@@ -108,7 +87,7 @@ public class CirclePolygonizer {
   }
 
   //assumed that point is outside circle
-  public Point calcCircleIntersection(Point point){
+  protected Point calcCircleIntersection(Point point){
     double radius = circ.getRadius();
     double slope = calcSlope(circ.getCenter(), point);
     double theta = Math.atan(slope);
@@ -117,11 +96,11 @@ public class CirclePolygonizer {
     return new PointImpl(X, Y, ctx);
   }
 
-  public InfBufLine calcTangentLine(Point pt){
+  protected InfBufLine calcTangentLine(Point pt){
     return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter(), pt)), pt, 0);
   }
 
-  public double calcSlope(Point point1, Point point2){
+  protected double calcSlope(Point point1, Point point2){
     if(point1.equals(point2)){
       return Double.NaN;
     }
@@ -133,13 +112,43 @@ public class CirclePolygonizer {
     return changeInY/changeInX;
   }
 
-  public double getPerpSlope(double slope){
+  protected double getPerpSlope(double slope){
     if(Double.isInfinite(slope)){
       return 0;
     }else if(slope == 0){
       return Double.POSITIVE_INFINITY;
     }
     return -1/slope;
+  }
+
+  protected void translatePoints(List <Point> lstOfPoints){
+    double xBound = circ.getCenter().getX();
+    double yBound = circ.getCenter().getY();
+    double X = 0;
+    double Y = 0;
+
+    int lstSize = lstOfPoints.size();
+    for(int i=lstSize-1;i>0; i--){
+      X = (lstOfPoints.get(i).getX());
+      Y =  yBound - (lstOfPoints.get(i).getY()-yBound);
+      Point point = ctx.makePoint(X, Y);
+      lstOfPoints.add(point);
+    }
+    lstSize = lstOfPoints.size();
+    for(int i=lstSize-2;i>0; i--){
+      X =  xBound - (lstOfPoints.get(i).getX()-xBound);
+      Y = (lstOfPoints.get(i).getY());
+      Point point = ctx.makePoint(X, Y);
+      lstOfPoints.add(point);
+    }
+  }
+
+  public void printListOfPoints(List <Point> lstOfPoints){
+    System.out.print("polygon points\n");
+    for(int i=0;i<lstOfPoints.size(); i++){
+      System.out.print(lstOfPoints.get(i));
+      System.out.print('\n');
+    }
   }
 
 
