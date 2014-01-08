@@ -118,7 +118,13 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     assertEquals(Double.POSITIVE_INFINITY, polygonizer.calcSlope(point1, point2), EPS);
 
     point2.reset(0, 0);
-//    Make sure it throws and exception
+
+    try {
+      polygonizer.calcSlope(point1, point2);
+      fail();
+    } catch (IllegalArgumentException e) {
+      //expected
+    }
   }
 
   @Test
