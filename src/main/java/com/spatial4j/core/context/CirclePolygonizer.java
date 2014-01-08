@@ -20,7 +20,7 @@ public class CirclePolygonizer {
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
 
-    List<Point> lstOfPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
+    List<Point> lstOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
   }
 
   protected SpatialContext ctx;
@@ -46,7 +46,7 @@ public class CirclePolygonizer {
 
     translatePoints(listOfPoints);
 
-    printListOfPoints(listOfPoints);
+   // printListOfPoints(listOfPoints);
 
     return listOfPoints;
   }
@@ -97,7 +97,17 @@ public class CirclePolygonizer {
     return new PointImpl(X, Y, ctx);
   }
 
+  //must be given a point on the circle
   protected InfBufLine calcTangentLine(Point pt){
+    double epsilon = 1E12;
+    double X = pt.getX()-circ.getCenter().getX();
+    double Y = pt.getY()-circ.getCenter().getY();
+    double radius = circ.getRadius();
+    double radiusSquared = radius*radius;
+    if( !((X*X + Y*Y < radiusSquared+epsilon) &&
+        (X*X + Y*Y > radiusSquared-epsilon))){
+      throw new IllegalArgumentException("Point does not lie on circle");
+    }
     return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter(), pt)), pt, 0);
   }
 

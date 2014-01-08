@@ -216,7 +216,8 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   }
 
   public boolean isOutsideCircle(Point point){
-    double epsilon = .000000000000003;
+    double epsilon = 3E-15;
+//    double epsilon = .000000000000003;
     double radius = circ.getRadius();
     double pointDistanceFromCenter = ctx.getDistCalc().distance(circ.getCenter(), point)-epsilon;
     if(pointDistanceFromCenter > radius){
