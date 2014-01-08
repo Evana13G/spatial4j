@@ -9,6 +9,7 @@ import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
 
+
 /**
  * Created by egizzi on 12/23/13.
  */
@@ -20,7 +21,6 @@ public class CirclePolygonizer {
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
 
     List<Point> lstOfPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
-
   }
 
   protected SpatialContext ctx;
@@ -32,6 +32,7 @@ public class CirclePolygonizer {
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
+
     Point definingPoint1 = ctx.makePoint(circ.getCenter().getX(), circ.getCenter().getY()+circ.getRadius());
     Point definingPoint2 = ctx.makePoint(circ.getCenter().getX()+circ.getRadius(), circ.getCenter().getY());
 
@@ -67,10 +68,10 @@ public class CirclePolygonizer {
   protected Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
 
     if(line1.equals(line2)){
-      return ctx.makePoint(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+      throw new IllegalArgumentException("Cannot calculate intersection point of two equivalent lines");
     } else if(line1.getSlope() == line2.getSlope()){
       //Should throw an exception here
-      return ctx.makePoint(Double.NaN, Double.NaN);
+      throw new IllegalArgumentException("Cannot calculate intersection point of two parallel lines");
     }else if(Double.isInfinite(line1.getSlope())){
       double X = line1.getIntercept();
       double Y = line2.getSlope()*X + line2.getIntercept();
@@ -102,7 +103,7 @@ public class CirclePolygonizer {
 
   protected double calcSlope(Point point1, Point point2){
     if(point1.equals(point2)){
-      return Double.NaN;
+      throw new IllegalArgumentException("Cannot calculate slope between two equivalent points");
     }
     double changeInY = point2.getY()-point1.getY();
     double changeInX = point2.getX()-point1.getX();
