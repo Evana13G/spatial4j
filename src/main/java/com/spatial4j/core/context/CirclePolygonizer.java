@@ -18,11 +18,37 @@ public class CirclePolygonizer {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
-    List<Point> listOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
+    List<Point> listOfPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
+    double xBound = circle.getCenter().getX();
+    double yBound = circle.getCenter().getY();
+    double X = 0;
+    double Y = 0;
+
+    System.out.print("reflect to Quadrant 2\n");
+    for(int i=0;i<listOfPoints.size()-1; i++){
+      X = (listOfPoints.get(i).getX());
+      Y =  yBound - (listOfPoints.get(i).getY()-yBound);
+      Point point = ctx.makePoint(X, Y);
+      System.out.print(point);
+      System.out.print('\n');
+      listOfPoints.add(point);
+    }
+
+    System.out.print("reflect to Quadrant 3 and 4 \n");
+    for(int i=1;i<listOfPoints.size()-2; i++){
+      X =  xBound - (listOfPoints.get(i).getX()-xBound);
+      Y = (listOfPoints.get(i).getY());
+      Point point = ctx.makePoint(X, Y);
+      System.out.print(point);
+      System.out.print('\n');
+      //listOfPoints.add(point);
+    }
+    System.out.print("actual points\n");
     for(int i=0;i<listOfPoints.size(); i++){
       System.out.print(listOfPoints.get(i));
       System.out.print('\n');
     }
+
   }
 
   protected SpatialContext ctx;
@@ -43,7 +69,7 @@ public class CirclePolygonizer {
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
     listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line1, line2, listOfPoints);
-//    listOfPoints.add(definingPoint2);
+    listOfPoints.add(definingPoint2);
     return listOfPoints;
   }
 
