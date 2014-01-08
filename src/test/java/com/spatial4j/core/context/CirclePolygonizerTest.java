@@ -31,7 +31,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   @Test
   public void testGetEnclosingPolygon(){
-    double tolerance = 200;
+    double tolerance = 20; //only want one iteration of recursion
     Point definingPoint1 = ctx.makePoint(50, 60);
     Point definingPoint2 = ctx.makePoint(60, 50);
 
@@ -40,17 +40,17 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
 
-//    listOfPoints.add(ctx.makePoint(54.142135916624156,60.0));
-//    listOfPoints.add(ctx.makePoint(57.071068165418836,57.07106745831209));
-//    listOfPoints.add(ctx.makePoint(60.00000041421349,54.142134916624215));
-
     listOfPoints.add(ctx.makePoint(50.0,60.0));
     listOfPoints.add(ctx.makePoint(60.0,60.0));
     listOfPoints.add(ctx.makePoint(60.0,50.0));
+    listOfPoints.add(ctx.makePoint(60.0,40.0));
+    listOfPoints.add(ctx.makePoint(50.0,40.0));
+    listOfPoints.add(ctx.makePoint(40.0,40.0));
+    listOfPoints.add(ctx.makePoint(40.0,50.0));
+    listOfPoints.add(ctx.makePoint(40.0,60.0));
 
-    ArrayList<Point> testListOfPoints = new ArrayList<Point>();
-    polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
-//    assertEquals(listOfPoints, testListOfPoints);
+    List <Point> testListOfPoints = polygonizer.getEnclosingPolygon(tolerance);
+    assertEquals(listOfPoints, testListOfPoints);
   }
 
   @Test
@@ -64,14 +64,14 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     InfBufLine line3 = new InfBufLine(Double.POSITIVE_INFINITY, point1, 0);
     InfBufLine line4 = new InfBufLine(Double.POSITIVE_INFINITY, point2, 0);
-    assertEquals(ctx.makePoint(Double.NaN, Double.NaN), polygonizer.calcLineIntersection(line3, line4));
+    // Make sure it throws and exception
 
     point1.reset(25, 0);
     point2.reset(75, 0);
 
     InfBufLine line5 = new InfBufLine(1, point1, 0);
     InfBufLine line6 = new InfBufLine(1, point2, 0);
-    assertEquals(ctx.makePoint(Double.NaN, Double.NaN), polygonizer.calcLineIntersection(line5, line6));
+    // Make sure it throws and exception
 
 
     InfBufLine line7 = new InfBufLine(1, point1, 0);
@@ -82,9 +82,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   @Test
   public void testCalcCircleIntersection(){
-    //need to test calcCircleIntersection with a line as an arg?
-    //Might wipe that function
-
     //Test with a point from all four quadrants
     Point point1 = ctx.makePoint(100,100);
     assertEquals(ctx.makePoint(57.0710678118654755,57.0710678118654755), polygonizer.calcCircleIntersection(point1));
@@ -134,23 +131,21 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     point2.reset(0, 50);
     assertEquals(Double.POSITIVE_INFINITY, polygonizer.calcSlope(point1, point2), EPS);
 
-    point2.reset(0, 0);
-    assertEquals(Double.NaN, polygonizer.calcSlope(point1, point2), EPS);
+//    point2.reset(0, 0);
+//    Make sure it throws and exception
   }
 
   @Test
   public void testRecursiveIter(){
-    double tolerance = 1;
+    double tolerance = 20;
     InfBufLine line1 = new InfBufLine(0, ctx.makePoint(50,60), 0);
-    InfBufLine line2 = new InfBufLine(10000000, ctx.makePoint(60,50), 0);
+    InfBufLine line2 = new InfBufLine(Double.POSITIVE_INFINITY, ctx.makePoint(60,50), 0);
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
-    listOfPoints.add(ctx.makePoint(50.0,60.0));
     listOfPoints.add(ctx.makePoint(60.0,60.0));
-    listOfPoints.add(ctx.makePoint(60.0,50.0));
     ArrayList<Point> testListOfPoints = new ArrayList<Point>();
     polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
 
-    //assertEquals(listOfPoints, testListOfPoints);
+    assertEquals(listOfPoints, testListOfPoints);
 
     tolerance = 0.1;
     listOfPoints.clear();
@@ -167,7 +162,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   @Test
   public void testIsTrueTangent(){
-    double DISTANCE = 0.0001;
+    double DISTANCE = 0.1;
 
     Point point = ctx.makePoint(randomIntBetween(51, 99), randomIntBetween(51, 99));
     Point tangentPoint = polygonizer.calcCircleIntersection(point);
@@ -175,13 +170,13 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     List <Point> pointsToTest = getCoordinatesGivenDistance(DISTANCE, tangentLine);
     Point point1 = pointsToTest.get(0);
-   // Point point2 = pointsToTest.get(1);
+    Point point2 = pointsToTest.get(1);
 
-    System.out.print(pointsToTest);
+    //System.out.print(pointsToTest);
 
     assertEquals(true, isOutsideCircle(point1));
-    //assertEquals(true, isOutsideCircle(point2));
-    //assertEquals(false, isOutsideCircle(tangentPoint));
+    assertEquals(true, isOutsideCircle(point2));
+    assertEquals(false, isOutsideCircle(tangentPoint));
 
     double Xpos = tangentPoint.getX() + DISTANCE;
     double Xneg = tangentPoint.getX() - DISTANCE;
@@ -227,19 +222,45 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   }
 
   public List<Point> getCoordinatesGivenDistance(double distance, InfBufLine line){
+
     double radius = circ.getRadius();
     double centerToPoint = Math.sqrt(distance*distance + radius*radius);
-    double theta1 = polygonizer.getPerpSlope(line.getSlope());
 
-    double X1 = centerToPoint*Math.cos(theta1) + circ.getCenter().getX();
-    double Y1 = centerToPoint*Math.sin(theta1) + circ.getCenter().getY();
-    //double X2 = sqrtCenterToPoint*Math.cos(theta2) + circ.getCenter().getX();
-    //double Y2 = sqrtCenterToPoint*Math.sin(theta2) + circ.getCenter().getY();
+    double theta = Math.atan(polygonizer.getPerpSlope(line.getSlope()));
+    double thetaShift = Math.atan(distance/radius);
+    double thetaSup = theta + thetaShift;
+    double thetaInf = theta - thetaShift;
+
+    double X1 = centerToPoint*Math.cos(thetaSup) + circ.getCenter().getX();
+    double Y1 = line.getSlope()*X1 + line.getIntercept();
+    double X2 = centerToPoint*Math.cos(thetaInf) + circ.getCenter().getX();
+    double Y2 = line.getSlope()*X2 + line.getIntercept();
 
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
     listOfPoints.add(ctx.makePoint(X1, Y1));
-    //listOfPoints.add(ctx.makePoint(X2, Y2));
+    listOfPoints.add(ctx.makePoint(X2, Y2));
     return listOfPoints;
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -99,7 +99,7 @@ public class CirclePolygonizer {
 
   //must be given a point on the circle
   protected InfBufLine calcTangentLine(Point pt){
-    double epsilon = 1E12;
+    double epsilon = 1E-12;
     double X = pt.getX()-circ.getCenter().getX();
     double Y = pt.getY()-circ.getCenter().getY();
     double radius = circ.getRadius();
@@ -139,7 +139,7 @@ public class CirclePolygonizer {
     double Y = 0;
 
     int lstSize = lstOfPoints.size();
-    for(int i=lstSize-1;i>0; i--){
+    for(int i=lstSize-2;i>=0; i--){
       X = (lstOfPoints.get(i).getX());
       Y =  yBound - (lstOfPoints.get(i).getY()-yBound);
       Point point = ctx.makePoint(X, Y);
