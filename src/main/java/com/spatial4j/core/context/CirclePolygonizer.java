@@ -19,10 +19,24 @@ public class CirclePolygonizer {
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
     List<Point> listOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
+
+    double centerX = circle.getCenter().getX();
+    double centerY = circle.getCenter().getY();
+    double X = 0;
+    double Y = 0;
+
     for(int i=0;i<listOfPoints.size(); i++){
       System.out.print(listOfPoints.get(i));
       System.out.print('\n');
     }
+
+    for(int i=0;i<listOfPoints.size()-1; i++){
+      X = listOfPoints.get(i).getX()-centerX;
+      Y = listOfPoints.get(i).getY()-centerY;
+      Point pt = ctx.makePoint(Y-centerX, X+centerY);
+      System.out.print(pt);
+    }
+
   }
 
   protected SpatialContext ctx;
