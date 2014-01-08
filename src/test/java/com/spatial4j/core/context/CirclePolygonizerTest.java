@@ -32,12 +32,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   @Test
   public void testGetEnclosingPolygon(){
     double tolerance = 20; //only want one iteration of recursion
-    Point definingPoint1 = ctx.makePoint(50, 60);
-    Point definingPoint2 = ctx.makePoint(60, 50);
-
-    InfBufLine line1 = new InfBufLine(0.0, definingPoint1, 0);
-    InfBufLine line2 = new InfBufLine(Double.POSITIVE_INFINITY, definingPoint2, 0);
-
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
 
     listOfPoints.add(ctx.makePoint(50.0,60.0));
@@ -90,7 +84,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     assertEquals(ctx.makePoint(57.0710678118654755,42.928932188134524), polygonizer.calcCircleIntersection(point1));
   }
 
-  //@Test
+  @Test
   public void testCalcTangentLine(){
     //given the argument of a point on the circle
     //(passed a point found using 'calcCircleIntersection')
@@ -109,14 +103,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     assertEquals(expectedTangentLine2.getSlope(), actualTangentLine2.getSlope(), EPS);
     assertEquals(expectedTangentLine2.getIntercept(), actualTangentLine2.getIntercept(), EPS);
-
-    pt.reset(42.928932188134524,57.0710678118654755);
-    InfBufLine expectedTangentLine3 = new InfBufLine(-1, pt, 0);
-    InfBufLine actualTangentLine3 = polygonizer.calcTangentLine(pt);
-
-    assertEquals(expectedTangentLine3.getSlope(), actualTangentLine3.getSlope(), EPS);
-    assertEquals(expectedTangentLine3.getIntercept(), actualTangentLine3.getIntercept(), EPS);
-
   }
 
   @Test
@@ -131,7 +117,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     point2.reset(0, 50);
     assertEquals(Double.POSITIVE_INFINITY, polygonizer.calcSlope(point1, point2), EPS);
 
-//    point2.reset(0, 0);
+    point2.reset(0, 0);
 //    Make sure it throws and exception
   }
 
@@ -243,24 +229,4 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
