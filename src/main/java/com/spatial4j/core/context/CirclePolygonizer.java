@@ -24,8 +24,8 @@ public class CirclePolygonizer {
     double X = 0;
     double Y = 0;
 
-    double lstSize = lstOfPoints.size();
-    for(int i=0;i<lstSize-1; i++){
+    int lstSize = lstOfPoints.size();
+    for(int i=lstSize-1;i>0; i--){
       X = (lstOfPoints.get(i).getX());
       Y =  yBound - (lstOfPoints.get(i).getY()-yBound);
       Point point = ctx.makePoint(X, Y);
@@ -33,7 +33,7 @@ public class CirclePolygonizer {
     }
 
     lstSize = lstOfPoints.size();
-    for(int i=1;i<lstSize-2; i++){
+    for(int i=lstSize-2;i>0; i--){
       X =  xBound - (lstOfPoints.get(i).getX()-xBound);
       Y = (lstOfPoints.get(i).getY());
       Point point = ctx.makePoint(X, Y);
@@ -46,7 +46,6 @@ public class CirclePolygonizer {
       System.out.print(lstOfPoints.get(i));
       System.out.print('\n');
     }
-
   }
 
   protected SpatialContext ctx;
