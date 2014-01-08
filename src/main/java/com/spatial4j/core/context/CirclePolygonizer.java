@@ -18,25 +18,35 @@ public class CirclePolygonizer {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
-    List<Point> listOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
 
-    double centerX = circle.getCenter().getX();
-    double centerY = circle.getCenter().getY();
+    List<Point> lstOfPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
+    double xBound = circle.getCenter().getX();
+    double yBound = circle.getCenter().getY();
     double X = 0;
     double Y = 0;
 
-    for(int i=0;i<listOfPoints.size(); i++){
-      System.out.print(listOfPoints.get(i));
+    int lstSize = lstOfPoints.size();
+    for(int i=lstSize-1;i>0; i--){
+      X = (lstOfPoints.get(i).getX());
+      Y =  yBound - (lstOfPoints.get(i).getY()-yBound);
+      Point point = ctx.makePoint(X, Y);
+      lstOfPoints.add(point);
+    }
+
+    lstSize = lstOfPoints.size();
+    for(int i=lstSize-2;i>0; i--){
+      X =  xBound - (lstOfPoints.get(i).getX()-xBound);
+      Y = (lstOfPoints.get(i).getY());
+      Point point = ctx.makePoint(X, Y);
+      lstOfPoints.add(point);
+    }
+
+    //print points
+    System.out.print("polygon points\n");
+    for(int i=0;i<lstOfPoints.size(); i++){
+      System.out.print(lstOfPoints.get(i));
       System.out.print('\n');
     }
-
-    for(int i=0;i<listOfPoints.size()-1; i++){
-      X = listOfPoints.get(i).getX()-centerX;
-      Y = listOfPoints.get(i).getY()-centerY;
-      Point pt = ctx.makePoint(Y-centerX, X+centerY);
-      System.out.print(pt);
-    }
-
   }
 
   protected SpatialContext ctx;
@@ -57,7 +67,7 @@ public class CirclePolygonizer {
     ArrayList<Point> listOfPoints = new ArrayList<Point>();
     listOfPoints.add(definingPoint1);
     recursiveIter(tolerance, line1, line2, listOfPoints);
-//    listOfPoints.add(definingPoint2);
+    listOfPoints.add(definingPoint2);
     return listOfPoints;
   }
 
