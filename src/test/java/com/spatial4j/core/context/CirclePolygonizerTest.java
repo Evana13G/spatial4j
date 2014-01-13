@@ -166,18 +166,18 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     //System.out.print(pointsToTest);
 
-    assertEquals(true, isOutsideCircle(point1));
-    assertEquals(true, isOutsideCircle(point2));
-    assertEquals(false, isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(point1));
+    assertTrue(isOutsideCircle(point2));
+    assertFalse(isOutsideCircle(tangentPoint));
 
     double xPos = tangentPoint.getX() + DISTANCE;
     double xNeg = tangentPoint.getX() - DISTANCE;
     double yPos = tangentLine.getSlope()*xPos + tangentLine.getIntercept();
     double yNeg = tangentLine.getSlope()*xNeg + tangentLine.getIntercept();
 
-    assertEquals(true, isOutsideCircle(ctx.makePoint(xPos, yPos)));
-    assertEquals(true, isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
-    assertEquals(false, isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos)));
+    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
+    assertFalse(isOutsideCircle(tangentPoint));
 
     tangentPoint.reset(50, 60);
     InfBufLine tangentLine1 = polygonizer.calcTangentLine(tangentPoint);
@@ -186,9 +186,9 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     yPos = tangentLine1.getSlope()*xPos + tangentLine1.getIntercept();
     yNeg = tangentLine1.getSlope()*xNeg + tangentLine1.getIntercept();
 
-    assertEquals(true, isOutsideCircle(ctx.makePoint(xPos, yPos)));
-    assertEquals(true, isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
-    assertEquals(false, isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos)));
+    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
+    assertFalse(isOutsideCircle(tangentPoint));
 
     tangentPoint.reset(60, 50);
     InfBufLine tangentLine2 = polygonizer.calcTangentLine(tangentPoint);
@@ -197,9 +197,9 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     yPos = tangentPoint.getX()+DISTANCE;
     yNeg = tangentPoint.getX()-DISTANCE;
 
-    assertEquals(true, isOutsideCircle(ctx.makePoint(xPos, yPos)));
-    assertEquals(true, isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
-    assertEquals(false, isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos)));
+    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
+    assertFalse(isOutsideCircle(tangentPoint));
   }
 
   public boolean isOutsideCircle(Point point){
