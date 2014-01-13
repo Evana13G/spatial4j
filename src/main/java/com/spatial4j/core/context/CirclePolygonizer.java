@@ -40,13 +40,6 @@ public class CirclePolygonizer {
     double xCoor2 = circ.getCenter().getX()+circ.getRadius();
     double yCoor2 = circ.getCenter().getY();
 
-    if(isGeo){
-      xCoor1 = circ.getCenter().getX();
-      yCoor1 = circ.getCenter().getY()+circ.getRadius();
-      xCoor2 = circ.getCenter().getX()+circ.getRadius();
-      yCoor2 = circ.getCenter().getY();
-    }
-
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
     Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
