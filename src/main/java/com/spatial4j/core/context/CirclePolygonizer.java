@@ -20,7 +20,13 @@ public class CirclePolygonizer {
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
 
-    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
+    //List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(20);
+
+    ArrayList <Point> test = new ArrayList<Point>();
+    test.add(ctx.makePoint(50, 250));
+    test.add(ctx.makePoint(40, 260));
+
+    List<Point> resultPoints = CirclePolygonizerObj.reflect('x', false, false, test);
   }
 
   protected SpatialContext ctx;
@@ -53,7 +59,7 @@ public class CirclePolygonizer {
 
     translatePoints(resultPoints);
 
-   // printListOfPoints(resultPoints);
+    printListOfPoints(resultPoints);
 
     return resultPoints;
   }
@@ -73,7 +79,6 @@ public class CirclePolygonizer {
   }
 
   protected Point calcLineIntersection(InfBufLine line1, InfBufLine line2){
-
     if(line1.equals(line2)){
       throw new IllegalArgumentException("Cannot calculate intersection point of two equivalent lines");
     } else if(line1.getSlope() == line2.getSlope()){
@@ -111,10 +116,8 @@ public class CirclePolygonizer {
     double y = pt.getY()-circ.getCenter().getY();
     double radius = circ.getRadius();
     double radiusSquared = radius*radius;
-    if( !((x*x + y*y < radiusSquared+epsilon) &&
-        (x*x + y*y > radiusSquared-epsilon))){
-      throw new IllegalArgumentException("Point does not lie on circle");
-    }
+    assert ((x*x + y*y < radiusSquared+epsilon) &&
+        (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
     return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter(), pt)), pt, 0);
   }
 
@@ -167,6 +170,42 @@ public class CirclePolygonizer {
       System.out.print(resultPoints.get(i));
       System.out.print('\n');
     }
+  }
+
+  public List <Point> reflect(char axis, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> pointsToReflect){
+    System.out.print(pointsToReflect);
+    ArrayList<Point> reflectedPoints = new ArrayList<Point>();
+    double xBound = circ.getCenter().getX();
+    double yBound = circ.getCenter().getY();
+    double x;
+    double y;
+
+    int lstSize = pointsToReflect.size();
+    int leadingOffset = (inclusiveStartPt) ? 0 : 1;
+    int trailingOffset = (inclusiveEndPt) ? 1 : 2;
+
+    if(axis == 'x'){
+
+      for(int i=lstSize-trailingOffset;i>=leadingOffset; i--){
+
+        x = (pointsToReflect.get(i).getX());
+        y =  yBound - (pointsToReflect.get(i).getY()-yBound);
+        Point point = ctx.makePoint(x, y);
+        reflectedPoints.add(point);
+      }
+
+    }else if(axis == 'y'){
+
+      for(int i=lstSize-trailingOffset;i>leadingOffset; i--){
+        x =  xBound - (pointsToReflect.get(i).getX()-xBound);
+        y = (pointsToReflect.get(i).getY());
+        Point point = ctx.makePoint(x, y);
+        reflectedPoints.add(point);
+      }
+
+    }
+    printListOfPoints(reflectedPoints);
+    return reflectedPoints;
   }
 
 }
