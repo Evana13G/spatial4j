@@ -26,25 +26,25 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   public CirclePolygonizerTest() {
     ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 0, 100, null));
     circ = ctx.makeCircle(50, 50, 10);
-    polygonizer = new CirclePolygonizer(ctx, circ);
+    polygonizer = new CirclePolygonizer(ctx, circ, false);
   }
 
   @Test
   public void testGetEnclosingPolygon(){
     double tolerance = 20; //only want one iteration of recursion
-    ArrayList<Point> listOfPoints = new ArrayList<Point>();
+    ArrayList<Point> resultPoints = new ArrayList<Point>();
 
-    listOfPoints.add(ctx.makePoint(50.0,60.0));
-    listOfPoints.add(ctx.makePoint(60.0,60.0));
-    listOfPoints.add(ctx.makePoint(60.0,50.0));
-    listOfPoints.add(ctx.makePoint(60.0,40.0));
-    listOfPoints.add(ctx.makePoint(50.0,40.0));
-    listOfPoints.add(ctx.makePoint(40.0,40.0));
-    listOfPoints.add(ctx.makePoint(40.0,50.0));
-    listOfPoints.add(ctx.makePoint(40.0,60.0));
+    resultPoints.add(ctx.makePoint(50.0,60.0));
+    resultPoints.add(ctx.makePoint(60.0,60.0));
+    resultPoints.add(ctx.makePoint(60.0,50.0));
+    resultPoints.add(ctx.makePoint(60.0,40.0));
+    resultPoints.add(ctx.makePoint(50.0,40.0));
+    resultPoints.add(ctx.makePoint(40.0,40.0));
+    resultPoints.add(ctx.makePoint(40.0,50.0));
+    resultPoints.add(ctx.makePoint(40.0,60.0));
 
-    List <Point> testListOfPoints = polygonizer.getEnclosingPolygon(tolerance);
-    assertEquals(listOfPoints, testListOfPoints);
+    List <Point> testResultPoints = polygonizer.getEnclosingPolygon(tolerance);
+    assertEquals(resultPoints, testResultPoints);
   }
 
   @Test
@@ -132,24 +132,24 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     double tolerance = 20;
     InfBufLine line1 = new InfBufLine(0, ctx.makePoint(50,60), 0);
     InfBufLine line2 = new InfBufLine(Double.POSITIVE_INFINITY, ctx.makePoint(60,50), 0);
-    ArrayList<Point> listOfPoints = new ArrayList<Point>();
-    listOfPoints.add(ctx.makePoint(60.0,60.0));
-    ArrayList<Point> testListOfPoints = new ArrayList<Point>();
-    polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
+    ArrayList<Point> resultPoints = new ArrayList<Point>();
+    resultPoints.add(ctx.makePoint(60.0,60.0));
+    ArrayList<Point> testResultPoints = new ArrayList<Point>();
+    polygonizer.recursiveIter(tolerance, line1, line2, testResultPoints);
 
-    assertEquals(listOfPoints, testListOfPoints);
+    assertEquals(resultPoints, testResultPoints);
 
     tolerance = 0.1;
-    listOfPoints.clear();
-    testListOfPoints.clear();
-    listOfPoints.add(ctx.makePoint(50.0,60.0));
-    listOfPoints.add(ctx.makePoint(60.0,60.0));
-    listOfPoints.add(ctx.makePoint(57.0710678118654755,57.0710678118654755));
-    listOfPoints.add(ctx.makePoint(60.0,60.0));
-    listOfPoints.add(ctx.makePoint(60.0,50.0));
-    polygonizer.recursiveIter(tolerance, line1, line2, testListOfPoints);
+    resultPoints.clear();
+    testResultPoints.clear();
+    resultPoints.add(ctx.makePoint(50.0,60.0));
+    resultPoints.add(ctx.makePoint(60.0,60.0));
+    resultPoints.add(ctx.makePoint(57.0710678118654755,57.0710678118654755));
+    resultPoints.add(ctx.makePoint(60.0,60.0));
+    resultPoints.add(ctx.makePoint(60.0,50.0));
+    polygonizer.recursiveIter(tolerance, line1, line2, testResultPoints);
 
-    //assertEquals(listOfPoints, testListOfPoints);
+    //assertEquals(resultPoints, testResultPoints);
   }
 
   @Test
@@ -170,35 +170,35 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     assertEquals(true, isOutsideCircle(point2));
     assertEquals(false, isOutsideCircle(tangentPoint));
 
-    double Xpos = tangentPoint.getX() + DISTANCE;
-    double Xneg = tangentPoint.getX() - DISTANCE;
-    double Ypos = tangentLine.getSlope()*Xpos + tangentLine.getIntercept();
-    double Yneg = tangentLine.getSlope()*Xneg + tangentLine.getIntercept();
+    double xPos = tangentPoint.getX() + DISTANCE;
+    double xNeg = tangentPoint.getX() - DISTANCE;
+    double yPos = tangentLine.getSlope()*xPos + tangentLine.getIntercept();
+    double yNeg = tangentLine.getSlope()*xNeg + tangentLine.getIntercept();
 
-    assertEquals(true, isOutsideCircle(ctx.makePoint(Xpos, Ypos)));
-    assertEquals(true, isOutsideCircle(ctx.makePoint(Xneg, Yneg)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(xPos, yPos)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
     assertEquals(false, isOutsideCircle(tangentPoint));
 
     tangentPoint.reset(50, 60);
     InfBufLine tangentLine1 = polygonizer.calcTangentLine(tangentPoint);
-    Xpos = tangentPoint.getX()+DISTANCE;
-    Xneg = tangentPoint.getX()-DISTANCE;
-    Ypos = tangentLine1.getSlope()*Xpos + tangentLine1.getIntercept();
-    Yneg = tangentLine1.getSlope()*Xneg + tangentLine1.getIntercept();
+    xPos = tangentPoint.getX()+DISTANCE;
+    xNeg = tangentPoint.getX()-DISTANCE;
+    yPos = tangentLine1.getSlope()*xPos + tangentLine1.getIntercept();
+    yNeg = tangentLine1.getSlope()*xNeg + tangentLine1.getIntercept();
 
-    assertEquals(true, isOutsideCircle(ctx.makePoint(Xpos, Ypos)));
-    assertEquals(true, isOutsideCircle(ctx.makePoint(Xneg, Yneg)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(xPos, yPos)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
     assertEquals(false, isOutsideCircle(tangentPoint));
 
     tangentPoint.reset(60, 50);
     InfBufLine tangentLine2 = polygonizer.calcTangentLine(tangentPoint);
-    Xpos = tangentLine2.getIntercept();
-    Xneg = Xpos;
-    Ypos = tangentPoint.getX()+DISTANCE;
-    Yneg = tangentPoint.getX()-DISTANCE;
+    xPos = tangentLine2.getIntercept();
+    xNeg = xPos;
+    yPos = tangentPoint.getX()+DISTANCE;
+    yNeg = tangentPoint.getX()-DISTANCE;
 
-    assertEquals(true, isOutsideCircle(ctx.makePoint(Xpos, Ypos)));
-    assertEquals(true, isOutsideCircle(ctx.makePoint(Xneg, Yneg)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(xPos, yPos)));
+    assertEquals(true, isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
     assertEquals(false, isOutsideCircle(tangentPoint));
   }
 
@@ -223,15 +223,15 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     double thetaSup = theta + thetaShift;
     double thetaInf = theta - thetaShift;
 
-    double X1 = centerToPoint*Math.cos(thetaSup) + circ.getCenter().getX();
-    double Y1 = line.getSlope()*X1 + line.getIntercept();
-    double X2 = centerToPoint*Math.cos(thetaInf) + circ.getCenter().getX();
-    double Y2 = line.getSlope()*X2 + line.getIntercept();
+    double x1 = centerToPoint*Math.cos(thetaSup) + circ.getCenter().getX();
+    double y1 = line.getSlope()*x1 + line.getIntercept();
+    double x2 = centerToPoint*Math.cos(thetaInf) + circ.getCenter().getX();
+    double y2 = line.getSlope()*x2 + line.getIntercept();
 
-    ArrayList<Point> listOfPoints = new ArrayList<Point>();
-    listOfPoints.add(ctx.makePoint(X1, Y1));
-    listOfPoints.add(ctx.makePoint(X2, Y2));
-    return listOfPoints;
+    ArrayList<Point> resultPoints = new ArrayList<Point>();
+    resultPoints.add(ctx.makePoint(x1, y1));
+    resultPoints.add(ctx.makePoint(x2, y2));
+    return resultPoints;
   }
 
 }

@@ -18,50 +18,64 @@ public class CirclePolygonizer {
   public static void main(String[] args) {
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
+    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
 
-    List<Point> lstOfPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
+    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(0.1);
   }
 
   protected SpatialContext ctx;
   protected Circle circ;
+  protected boolean isGeo;
 
-  public CirclePolygonizer(SpatialContext ctx, Circle circ){
+  public CirclePolygonizer(SpatialContext ctx, Circle circ, boolean isGeo){
     this.ctx = ctx;
     this.circ = circ;
+    this.isGeo = isGeo;
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
 
-    Point definingPoint1 = ctx.makePoint(circ.getCenter().getX(), circ.getCenter().getY()+circ.getRadius());
-    Point definingPoint2 = ctx.makePoint(circ.getCenter().getX()+circ.getRadius(), circ.getCenter().getY());
+    double xCoor1 = circ.getCenter().getX();
+    double yCoor1 = circ.getCenter().getY()+circ.getRadius();
+    double xCoor2 = circ.getCenter().getX()+circ.getRadius();
+    double yCoor2 = circ.getCenter().getY();
+
+    if(isGeo){
+      xCoor1 = circ.getCenter().getX();
+      yCoor1 = circ.getCenter().getY()+circ.getRadius();
+      xCoor2 = circ.getCenter().getX()+circ.getRadius();
+      yCoor2 = circ.getCenter().getY();
+    }
+
+    Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
+    Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
 
-    ArrayList<Point> listOfPoints = new ArrayList<Point>();
-    listOfPoints.add(definingPoint1);
-    recursiveIter(tolerance, line1, line2, listOfPoints);
-    listOfPoints.add(definingPoint2);
+    ArrayList<Point> resultPoints = new ArrayList<Point>();
+    resultPoints.add(definingPoint1);
+    recursiveIter(tolerance, line1, line2, resultPoints);
+    resultPoints.add(definingPoint2);
 
-    translatePoints(listOfPoints);
+    translatePoints(resultPoints);
 
-   // printListOfPoints(listOfPoints);
+   // printListOfPoints(resultPoints);
 
-    return listOfPoints;
+    return resultPoints;
   }
 
-  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> listOfPoints){
+  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
     double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
     if (currentMaxDistance <= tolerance){
-      listOfPoints.add(lineIntersectionPoint);
+      resultPoints.add(lineIntersectionPoint);
     } else {
       InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
-      recursiveIter(tolerance, line1, line3, listOfPoints);
-      listOfPoints.add(circleIntersectionPoint);
-      recursiveIter(tolerance, line3, line2,  listOfPoints);
+      recursiveIter(tolerance, line1, line3, resultPoints);
+      resultPoints.add(circleIntersectionPoint);
+      recursiveIter(tolerance, line3, line2,  resultPoints);
     }
   }
 
@@ -73,17 +87,17 @@ public class CirclePolygonizer {
       //Should throw an exception here
       throw new IllegalArgumentException("Cannot calculate intersection point of two parallel lines");
     }else if(Double.isInfinite(line1.getSlope())){
-      double X = line1.getIntercept();
-      double Y = line2.getSlope()*X + line2.getIntercept();
-      return new PointImpl(X, Y, ctx);
+      double x = line1.getIntercept();
+      double y = line2.getSlope()*x + line2.getIntercept();
+      return new PointImpl(x, y, ctx);
     }else if(Double.isInfinite(line2.getSlope())){
-      double X = line2.getIntercept();
-      double Y = line1.getSlope()*X + line1.getIntercept();
-      return new PointImpl(X, Y, ctx);
+      double x = line2.getIntercept();
+      double y = line1.getSlope()*x + line1.getIntercept();
+      return new PointImpl(x, y, ctx);
     }else{
-      double X = (line2.getIntercept() - line1.getIntercept())/(line1.getSlope()-line2.getSlope());
-      double Y = line1.getSlope()*X + line1.getIntercept();
-      return new PointImpl(X, Y, ctx);
+      double x = (line2.getIntercept() - line1.getIntercept())/(line1.getSlope()-line2.getSlope());
+      double y = line1.getSlope()*x + line1.getIntercept();
+      return new PointImpl(x, y, ctx);
     }
   }
 
@@ -92,20 +106,20 @@ public class CirclePolygonizer {
     double radius = circ.getRadius();
     double slope = calcSlope(circ.getCenter(), point);
     double theta = Math.atan(slope);
-    double X = radius*Math.cos(theta) + circ.getCenter().getX();
-    double Y = radius*Math.sin(theta) + circ.getCenter().getY();
-    return new PointImpl(X, Y, ctx);
+    double x = radius*Math.cos(theta) + circ.getCenter().getX();
+    double y = radius*Math.sin(theta) + circ.getCenter().getY();
+    return new PointImpl(x, y, ctx);
   }
 
   //must be given a point on the circle
   protected InfBufLine calcTangentLine(Point pt){
     double epsilon = 1E-12;
-    double X = pt.getX()-circ.getCenter().getX();
-    double Y = pt.getY()-circ.getCenter().getY();
+    double x = pt.getX()-circ.getCenter().getX();
+    double y = pt.getY()-circ.getCenter().getY();
     double radius = circ.getRadius();
     double radiusSquared = radius*radius;
-    if( !((X*X + Y*Y < radiusSquared+epsilon) &&
-        (X*X + Y*Y > radiusSquared-epsilon))){
+    if( !((x*x + y*y < radiusSquared+epsilon) &&
+        (x*x + y*y > radiusSquared-epsilon))){
       throw new IllegalArgumentException("Point does not lie on circle");
     }
     return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter(), pt)), pt, 0);
@@ -132,32 +146,32 @@ public class CirclePolygonizer {
     return -1/slope;
   }
 
-  protected void translatePoints(List <Point> lstOfPoints){
+  protected void translatePoints(List <Point> resultPoints){
     double xBound = circ.getCenter().getX();
     double yBound = circ.getCenter().getY();
-    double X = 0;
-    double Y = 0;
+    double x;
+    double y;
 
-    int lstSize = lstOfPoints.size();
+    int lstSize = resultPoints.size();
     for(int i=lstSize-2;i>=0; i--){
-      X = (lstOfPoints.get(i).getX());
-      Y =  yBound - (lstOfPoints.get(i).getY()-yBound);
-      Point point = ctx.makePoint(X, Y);
-      lstOfPoints.add(point);
+      x = (resultPoints.get(i).getX());
+      y =  yBound - (resultPoints.get(i).getY()-yBound);
+      Point point = ctx.makePoint(x, y);
+      resultPoints.add(point);
     }
-    lstSize = lstOfPoints.size();
+    lstSize = resultPoints.size();
     for(int i=lstSize-2;i>0; i--){
-      X =  xBound - (lstOfPoints.get(i).getX()-xBound);
-      Y = (lstOfPoints.get(i).getY());
-      Point point = ctx.makePoint(X, Y);
-      lstOfPoints.add(point);
+      x =  xBound - (resultPoints.get(i).getX()-xBound);
+      y = (resultPoints.get(i).getY());
+      Point point = ctx.makePoint(x, y);
+      resultPoints.add(point);
     }
   }
 
-  public void printListOfPoints(List <Point> lstOfPoints){
+  public void printListOfPoints(List <Point> resultPoints){
     System.out.print("polygon points\n");
-    for(int i=0;i<lstOfPoints.size(); i++){
-      System.out.print(lstOfPoints.get(i));
+    for(int i=0;i<resultPoints.size(); i++){
+      System.out.print(resultPoints.get(i));
       System.out.print('\n');
     }
   }
