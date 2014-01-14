@@ -83,7 +83,7 @@ public class GeoCircle extends CircleImpl {
   }
 
   @Override
-  protected double getYAxis() {
+  public double getYAxis() {
     return horizAxisY;
   }
 

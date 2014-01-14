@@ -210,7 +210,7 @@ public class CircleImpl implements Circle {
   /**
    * The <code>Y</code> coordinate of where the circle axis intersect.
    */
-  protected double getYAxis() {
+  public double getYAxis() {
     return point.getY();
   }
 

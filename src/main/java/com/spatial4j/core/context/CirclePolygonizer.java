@@ -40,6 +40,10 @@ public class CirclePolygonizer {
     double xCoor2 = circ.getCenter().getX()+circ.getRadius();
     double yCoor2 = circ.getCenter().getY();
 
+    if(isGeo){
+      yCoor2 = ((CircleImpl)circ).getYAxis();
+    }
+
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
     Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
@@ -136,28 +140,28 @@ public class CirclePolygonizer {
   }
 
   protected void translatePoints(List <Point> resultPoints){
-    reflect('x', 250, 50, true, false, resultPoints);
-    reflect('y', 250, 50, false, false, resultPoints);
+    reflect('x', circ.getCenter(), true, false, resultPoints);
+    reflect('y', circ.getCenter(), false, false, resultPoints);
   }
 
-  public void reflect(char axis, int xAxis, int yAxis, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> resultPoints){
+  public void reflect(char axisToReflectOver, Point axesIntersectionPoint, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> resultPoints){
     double x;
     double y;
-    double xBound = yAxis;
-    double yBound = xAxis;
+    double xBound = axesIntersectionPoint.getX();
+    double yBound = axesIntersectionPoint.getY();
 
     int lstSize = resultPoints.size();
     int leadingOffset = (inclusiveStartPt) ? 0 : 1;
     int trailingOffset = (inclusiveEndPt) ? 1 : 2;
 
-    if(axis == 'x'){
+    if(axisToReflectOver == 'x'){
       for(int i=lstSize-trailingOffset;i>=leadingOffset; i--){
         x = (resultPoints.get(i).getX());
         y =  yBound - (resultPoints.get(i).getY()-yBound);
         Point point = ctx.makePoint(x, y);
         resultPoints.add(point);
       }
-    }else if(axis == 'y'){
+    }else if(axisToReflectOver == 'y'){
       for(int i=lstSize-trailingOffset;i>=leadingOffset; i--){
         x =  xBound - (resultPoints.get(i).getX()-xBound);
         y = (resultPoints.get(i).getY());
