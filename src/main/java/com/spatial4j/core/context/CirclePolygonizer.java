@@ -8,6 +8,7 @@ import com.spatial4j.core.distance.CartesianDistCalc;
 import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
+import com.vividsolutions.jts.awt.PointShapeFactory;
 
 
 /**
@@ -16,9 +17,16 @@ import com.spatial4j.core.shape.impl.*;
 public class CirclePolygonizer {
 
   public static void main(String[] args) {
+
+/* Cartesian Circle Test*/
     SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
+    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, false);
+
+/* Geodetic Circle Test*/
+//    SpatialContext ctx = new SpatialContext(true, null, null);
+//    Circle circle = (CircleImpl)(new GeoCircle(ctx.makePoint(100, 70), 10, ctx));
+//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
 
     List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
   }
