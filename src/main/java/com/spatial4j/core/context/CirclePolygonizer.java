@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.spatial4j.core.distance.CartesianDistCalc;
+import com.spatial4j.core.distance.GeodesicSphereDistCalc;
 import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
@@ -26,29 +27,36 @@ public class CirclePolygonizer {
     Circle circle = (CircleImpl)(new GeoCircle(ctx.makePoint(100, 70), 10, ctx));
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
 
-
-    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(20);
+    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
   }
 
   protected SpatialContext ctx;
   protected Circle circ;
+  protected Point center;
+  protected Point axialCenter;
   protected boolean isGeo;
+
 
   public CirclePolygonizer(SpatialContext ctx, Circle circ, boolean isGeo){
     this.ctx = ctx;
     this.circ = circ;
+    this.center = circ.getCenter();
+    this.axialCenter = center;
     this.isGeo = isGeo;
+    if(isGeo){
+      this.axialCenter = ctx.makePoint(center.getX(), ((CircleImpl) circ).getYAxis());
+    }
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
 
-    double xCoor1 = circ.getCenter().getX();
-    double yCoor1 = circ.getCenter().getY()+circ.getRadius();
-    double xCoor2 = circ.getCenter().getX()+circ.getRadius();
-    double yCoor2 = circ.getCenter().getY();
+    double xCoor1 = center.getX();
+    double yCoor1 = center.getY()+circ.getRadius();
+    double xCoor2 = center.getX()+circ.getRadius();
+    double yCoor2 = center.getY();
 
     if(isGeo){
-      yCoor2 = ((CircleImpl)circ).getYAxis();
+      yCoor2 = axialCenter.getY();
     }
 
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
@@ -83,9 +91,12 @@ public class CirclePolygonizer {
   protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
-
-    double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
-
+    double currentMaxDistance;
+    if(isGeo){
+      currentMaxDistance = Math.sqrt(Math.pow(lineIntersectionPoint.getY()-circleIntersectionPoint.getY(), 2) + Math.pow(lineIntersectionPoint.getX()-circleIntersectionPoint.getX(), 2));
+    }else{
+      currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
+    }
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
     } else {
@@ -121,14 +132,14 @@ public class CirclePolygonizer {
   protected Point calcCircleIntersection(Point point){
 
     double radius = circ.getRadius();
-    double slope = calcSlope(circ.getCenter(), point);
+    double slope = calcSlope(center, point);
     double theta = Math.atan(slope);
     double bearing = ((Math.PI/2) - theta)*(180/Math.PI);
     if(isGeo){bearing = 90 + bearing;};
-    Point intersectionPoint = ctx.getDistCalc().pointOnBearing(circ.getCenter(), radius, bearing, ctx, null);
+    Point intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
 
-    //double x = radius*Math.cos(theta) + circ.getCenter().getX();
-    //double y = radius*Math.sin(theta) + circ.getCenter().getY();
+    //double x = radius*Math.cos(theta) + center.getX();
+    //double y = radius*Math.sin(theta) + center.getY();
     //return new PointImpl(x, y, ctx);
 
     return intersectionPoint;
@@ -137,13 +148,13 @@ public class CirclePolygonizer {
   //must be given a point on the circle
   protected InfBufLine calcTangentLine(Point pt){
     double epsilon = 1E-12;
-    double x = pt.getX()-circ.getCenter().getX();
-    double y = pt.getY()-circ.getCenter().getY();
+    double x = pt.getX()-center.getX();
+    double y = pt.getY()-center.getY();
     double radius = circ.getRadius();
     double radiusSquared = radius*radius;
     assert ((x*x + y*y < radiusSquared+epsilon) &&
         (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
-    return new InfBufLine(getPerpSlope(calcSlope(circ.getCenter(), pt)), pt, 0);
+    return new InfBufLine(getPerpSlope(calcSlope(center, pt)), pt, 0);
   }
 
   protected double calcSlope(Point point1, Point point2){
@@ -169,10 +180,10 @@ public class CirclePolygonizer {
 
   protected void translatePoints(List <Point> resultPoints){
     if(isGeo){
-      reflect('y', circ.getCenter(), false, false, resultPoints);
+      reflect('y', center, false, false, resultPoints);
     }else{
-      reflect('x', circ.getCenter(), true, false, resultPoints);
-      reflect('y', circ.getCenter(), false, false, resultPoints);
+      reflect('x', center, true, false, resultPoints);
+      reflect('y', center, false, false, resultPoints);
     }
   }
 
