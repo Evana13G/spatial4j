@@ -20,13 +20,7 @@ public class CirclePolygonizer {
     Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
     CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
 
-    //List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(20);
-
-    ArrayList <Point> test = new ArrayList<Point>();
-    test.add(ctx.makePoint(50, 250));
-    test.add(ctx.makePoint(40, 260));
-
-    List<Point> resultPoints = CirclePolygonizerObj.reflect('x', false, false, test);
+    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
   }
 
   protected SpatialContext ctx;
@@ -58,7 +52,6 @@ public class CirclePolygonizer {
     resultPoints.add(definingPoint2);
 
     translatePoints(resultPoints);
-
     printListOfPoints(resultPoints);
 
     return resultPoints;
@@ -143,69 +136,43 @@ public class CirclePolygonizer {
   }
 
   protected void translatePoints(List <Point> resultPoints){
-    double xBound = circ.getCenter().getX();
-    double yBound = circ.getCenter().getY();
+    reflect('x', 250, 50, true, false, resultPoints);
+    reflect('y', 250, 50, false, false, resultPoints);
+  }
+
+  public void reflect(char axis, int xAxis, int yAxis, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> resultPoints){
     double x;
     double y;
+    double xBound = yAxis;
+    double yBound = xAxis;
 
     int lstSize = resultPoints.size();
-    for(int i=lstSize-2;i>=0; i--){
-      x = (resultPoints.get(i).getX());
-      y =  yBound - (resultPoints.get(i).getY()-yBound);
-      Point point = ctx.makePoint(x, y);
-      resultPoints.add(point);
-    }
-    lstSize = resultPoints.size();
-    for(int i=lstSize-2;i>0; i--){
-      x =  xBound - (resultPoints.get(i).getX()-xBound);
-      y = (resultPoints.get(i).getY());
-      Point point = ctx.makePoint(x, y);
-      resultPoints.add(point);
-    }
-  }
-
-  public void printListOfPoints(List <Point> resultPoints){
-    System.out.print("polygon points\n");
-    for(int i=0;i<resultPoints.size(); i++){
-      System.out.print(resultPoints.get(i));
-      System.out.print('\n');
-    }
-  }
-
-  public List <Point> reflect(char axis, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> pointsToReflect){
-    System.out.print(pointsToReflect);
-    ArrayList<Point> reflectedPoints = new ArrayList<Point>();
-    double xBound = circ.getCenter().getX();
-    double yBound = circ.getCenter().getY();
-    double x;
-    double y;
-
-    int lstSize = pointsToReflect.size();
     int leadingOffset = (inclusiveStartPt) ? 0 : 1;
     int trailingOffset = (inclusiveEndPt) ? 1 : 2;
 
     if(axis == 'x'){
-
       for(int i=lstSize-trailingOffset;i>=leadingOffset; i--){
-
-        x = (pointsToReflect.get(i).getX());
-        y =  yBound - (pointsToReflect.get(i).getY()-yBound);
+        x = (resultPoints.get(i).getX());
+        y =  yBound - (resultPoints.get(i).getY()-yBound);
         Point point = ctx.makePoint(x, y);
-        reflectedPoints.add(point);
+        resultPoints.add(point);
       }
-
     }else if(axis == 'y'){
-
-      for(int i=lstSize-trailingOffset;i>leadingOffset; i--){
-        x =  xBound - (pointsToReflect.get(i).getX()-xBound);
-        y = (pointsToReflect.get(i).getY());
+      for(int i=lstSize-trailingOffset;i>=leadingOffset; i--){
+        x =  xBound - (resultPoints.get(i).getX()-xBound);
+        y = (resultPoints.get(i).getY());
         Point point = ctx.makePoint(x, y);
-        reflectedPoints.add(point);
+        resultPoints.add(point);
       }
-
     }
-    printListOfPoints(reflectedPoints);
-    return reflectedPoints;
+  }
+
+  public void printListOfPoints(List <Point> resultPoints){
+    System.out.print("\nPolygon Points\n");
+    for(int i=0;i<resultPoints.size(); i++){
+      System.out.print(resultPoints.get(i));
+      System.out.print('\n');
+    }
   }
 
 }

@@ -233,6 +233,15 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     resultPoints.add(ctx.makePoint(x2, y2));
     return resultPoints;
   }
+//*** to test reflect function
+
+//  ArrayList <Point> test = new ArrayList<Point>();
+//  test.add(ctx.makePoint(50, 250));
+//  test.add(ctx.makePoint(40, 260));
+//  test.add(ctx.makePoint(30, 270));
+//  test.add(ctx.makePoint(20, 280));
+//
+//  List<Point> resultPoints = CirclePolygonizerObj.reflect(50, 250, true, true, test);
 
 }
 
