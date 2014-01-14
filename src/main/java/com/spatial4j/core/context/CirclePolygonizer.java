@@ -8,7 +8,6 @@ import com.spatial4j.core.distance.CartesianDistCalc;
 import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
-import com.vividsolutions.jts.awt.PointShapeFactory;
 
 
 /**
@@ -17,18 +16,18 @@ import com.vividsolutions.jts.awt.PointShapeFactory;
 public class CirclePolygonizer {
 
   public static void main(String[] args) {
-
 /* Cartesian Circle Test*/
-    SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
-    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, false);
+//    SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
+//    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
+//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, false);
 
-/* Geodetic Circle Test*/
-//    SpatialContext ctx = new SpatialContext(true, null, null);
-//    Circle circle = (CircleImpl)(new GeoCircle(ctx.makePoint(100, 70), 10, ctx));
-//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
+///* Geodetic Circle Test*/
+    SpatialContext ctx = new SpatialContext(true, null, null);
+    Circle circle = (CircleImpl)(new GeoCircle(ctx.makePoint(100, 70), 10, ctx));
+    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, true);
 
-    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
+
+    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(20);
   }
 
   protected SpatialContext ctx;
@@ -63,8 +62,20 @@ public class CirclePolygonizer {
     recursiveIter(tolerance, line1, line2, resultPoints);
     resultPoints.add(definingPoint2);
 
+    /*HANDLE QUADRANT 4*/
+//    if(isGeo){
+//      double xCoor3 = xCoor1;
+//      double yCoor3 = yCoor2 - (yCoor1 - yCoor2);
+//      Point definingPoint3 = ctx.makePoint(xCoor3, yCoor3);
+//      InfBufLine line3 = new InfBufLine (0.0, definingPoint3, 0);
+//      ArrayList<Point> resultPointsQuad4 = new ArrayList<Point>();
+//      recursiveIter(tolerance, line2, line3, resultPointsQuad4);
+//      resultPointsQuad4.add(definingPoint3);
+//      printListOfPoints(resultPointsQuad4);
+//    }
+
     translatePoints(resultPoints);
-    //printListOfPoints(resultPoints);
+    printListOfPoints(resultPoints);
 
     return resultPoints;
   }
@@ -72,7 +83,9 @@ public class CirclePolygonizer {
   protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
+
     double currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
+
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
     } else {
@@ -111,6 +124,7 @@ public class CirclePolygonizer {
     double slope = calcSlope(circ.getCenter(), point);
     double theta = Math.atan(slope);
     double bearing = ((Math.PI/2) - theta)*(180/Math.PI);
+    if(isGeo){bearing = 90 + bearing;};
     Point intersectionPoint = ctx.getDistCalc().pointOnBearing(circ.getCenter(), radius, bearing, ctx, null);
 
     //double x = radius*Math.cos(theta) + circ.getCenter().getX();
@@ -154,8 +168,12 @@ public class CirclePolygonizer {
   }
 
   protected void translatePoints(List <Point> resultPoints){
-    reflect('x', circ.getCenter(), true, false, resultPoints);
-    reflect('y', circ.getCenter(), false, false, resultPoints);
+    if(isGeo){
+      reflect('y', circ.getCenter(), false, false, resultPoints);
+    }else{
+      reflect('x', circ.getCenter(), true, false, resultPoints);
+      reflect('y', circ.getCenter(), false, false, resultPoints);
+    }
   }
 
   public void reflect(char axisToReflectOver, Point axesIntersectionPoint, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> resultPoints){
