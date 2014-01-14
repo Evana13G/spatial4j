@@ -56,7 +56,7 @@ public class CirclePolygonizer {
     resultPoints.add(definingPoint2);
 
     translatePoints(resultPoints);
-    printListOfPoints(resultPoints);
+    //printListOfPoints(resultPoints);
 
     return resultPoints;
   }
@@ -98,12 +98,18 @@ public class CirclePolygonizer {
 
   //assumed that point is outside circle
   protected Point calcCircleIntersection(Point point){
+
     double radius = circ.getRadius();
     double slope = calcSlope(circ.getCenter(), point);
     double theta = Math.atan(slope);
-    double x = radius*Math.cos(theta) + circ.getCenter().getX();
-    double y = radius*Math.sin(theta) + circ.getCenter().getY();
-    return new PointImpl(x, y, ctx);
+    double bearing = ((Math.PI/2) - theta)*(180/Math.PI);
+    Point intersectionPoint = ctx.getDistCalc().pointOnBearing(circ.getCenter(), radius, bearing, ctx, null);
+
+    //double x = radius*Math.cos(theta) + circ.getCenter().getX();
+    //double y = radius*Math.sin(theta) + circ.getCenter().getY();
+    //return new PointImpl(x, y, ctx);
+
+    return intersectionPoint;
   }
 
   //must be given a point on the circle
