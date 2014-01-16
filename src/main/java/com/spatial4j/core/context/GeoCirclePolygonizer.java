@@ -17,33 +17,25 @@ public class GeoCirclePolygonizer {
 
   public static void main(String[] args) {
 
-/* Cartesian Circle Test*/
-    SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
-    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
+    SpatialContext ctx = SpatialContext.GEO;
+    Circle circle = new GeoCircle(ctx.makePoint(100, 85), 3, ctx);
     GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle);
 
-///* Geodetic Circle Test*/
-//    SpatialContext ctx = SpatialContext.GEO;
-//    Circle circle = new GeoCircle(ctx.makePoint(100, 85), 3, ctx);
-//    GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle, true);
-
-    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.1);
+    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.001);
   }
 
   protected final SpatialContext ctx;
   protected final Circle circ;
   protected final Point center;
   protected final Point axialCenter;
+  protected final double skew;
 
   public GeoCirclePolygonizer(SpatialContext ctx, Circle circ){
     this.ctx = ctx;
     this.circ = circ;
     this.center = circ.getCenter();
-    if(ctx.isGeo()){
-      this.axialCenter = ctx.makePoint(center.getX(), ((CircleImpl) circ).getYAxis());
-    }else{
-      this.axialCenter = center;
-    }
+    this.axialCenter = ctx.makePoint(center.getX(), ((CircleImpl) circ).getYAxis());
+    this.skew = DistanceUtils.calcLonDegreesAtLat(center.getY(), 1);
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
@@ -51,23 +43,14 @@ public class GeoCirclePolygonizer {
     double xCoor1 = center.getX();
     double yCoor1 = center.getY()+circ.getRadius();
     double xCoor2 = center.getX()+circ.getRadius();
-    double yCoor2 = center.getY();
-//if else
-
-    if (ctx.isGeo()){
-      yCoor2 = axialCenter.getY();
-    }
+    double yCoor2 = axialCenter.getY();
 
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
     Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
-    //if geodetic, need to calculate a different slope (given two points)
-    //double skewingFactor = 1/(360* Math.cos(Math.toRadians(definingPoint2.getY())));
-    //InfBufLine line2 = new InfBufLine (skewingFactor, definingPoint2, 0);
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
 
-    //Quandrant 1, inclusive of Q-1/4 point
     ArrayList<Point> resultPoints = new ArrayList<Point>();
     resultPoints.add(definingPoint1);
     recursiveIter(tolerance, line1, line2, resultPoints);
@@ -101,7 +84,6 @@ public class GeoCirclePolygonizer {
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
     double currentMaxDistance;
-    //currentMaxDistance = ctx.getDistCalc().distance(circleIntersectionPoint, lineIntersectionPoint);
     currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
@@ -143,11 +125,6 @@ public class GeoCirclePolygonizer {
     double bearing = ((Math.PI/2) - theta)*(180/Math.PI);
     if(ctx.isGeo()){bearing = 90 + bearing;};
     Point intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
-
-    //double x = radius*Math.cos(theta) + center.getX();
-    //double y = radius*Math.sin(theta) + center.getY();
-    //return new PointImpl(x, y, ctx);
-
     return intersectionPoint;
   }
 
@@ -169,7 +146,31 @@ public class GeoCirclePolygonizer {
     double radiusSquared = radius*radius;
     assert ((x*x + y*y < radiusSquared+epsilon) &&
             (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
-    return new InfBufLine(getPerpSlope(calcSlope(center, pt)), pt, 0);
+
+
+    //if geodetic, need to calculate a different slope (given two points)
+    //double skewingFactor = 1/(360* Math.cos(Math.toRadians(definingPoint2.getY())));
+    //InfBufLine line2 = new InfBufLine (skewingFactor, definingPoint2, 0);
+
+    //letting the dist of one degree of lat = 1
+    //and dist of one degree of long at that lat = distLon
+    double distLon = DistanceUtils.calcLonDegreesAtLat(pt.getY(), 1);
+    double skew = distLon;
+    //double slope = Math.tan(90 * skew);
+    //near pole(85 lat), lat is about 7 times the dist of long
+
+    double slope = getPerpSlope(calcSlope(center, pt));
+//    System.out.print('\n');
+//    System.out.print("slope: ");
+//    System.out.print(slope);
+//    slope = slope*skew;
+//    System.out.print('\n');
+//    System.out.print("skew: ");
+//    System.out.print(skew);
+//    System.out.print('\n');
+//    System.out.print("new slope: ");
+//    System.out.print(slope);
+    return new InfBufLine(slope, pt, 0);
   }
 
   protected double calcSlope(Point point1, Point point2){
@@ -194,12 +195,7 @@ public class GeoCirclePolygonizer {
   }
 
   protected void translatePoints(List <Point> resultPoints){
-    if(ctx.isGeo()){
-      reflect('y', center, false, false, resultPoints);
-    }else{
-      reflect('x', center, true, false, resultPoints);
-      reflect('y', center, false, false, resultPoints);
-    }
+    reflect('y', center, false, false, resultPoints);
   }
 
   public void reflect(char axisToReflectOver, Point axesIntersectionPoint, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> resultPoints){
