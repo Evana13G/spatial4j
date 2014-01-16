@@ -18,10 +18,10 @@ public class GeoCirclePolygonizer {
   public static void main(String[] args) {
 
     SpatialContext ctx = SpatialContext.GEO;
-    Circle circle = new GeoCircle(ctx.makePoint(100, 85), 3, ctx);
+    Circle circle = new GeoCircle(ctx.makePoint(100, 20), 4, ctx);
     GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle);
 
-    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.001);
+    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.00001);
   }
 
   protected final SpatialContext ctx;
@@ -35,7 +35,7 @@ public class GeoCirclePolygonizer {
     this.circ = circ;
     this.center = circ.getCenter();
     this.axialCenter = ctx.makePoint(center.getX(), ((CircleImpl) circ).getYAxis());
-    this.skew = DistanceUtils.calcLonDegreesAtLat(center.getY(), 1);
+    this.skew = 1/(DistanceUtils.calcLonDegreesAtLat(center.getY(), 1));
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
@@ -53,7 +53,7 @@ public class GeoCirclePolygonizer {
 
     ArrayList<Point> resultPoints = new ArrayList<Point>();
     resultPoints.add(definingPoint1);
-    recursiveIter(tolerance, line1, line2, resultPoints);
+    recursiveIter(tolerance, line1, line2, resultPoints, Math.PI/4);
     resultPoints.add(definingPoint2);
 
     /*HANDLE QUADRANT 4*/
@@ -80,18 +80,20 @@ public class GeoCirclePolygonizer {
     return resultPoints;
   }
 
-  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints){
+  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints, double angle){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
-    Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
+    Point circleIntersectionPoint = calcCircleIntersection(angle);
+    double plusMinusAngle = (angle/2);
+
     double currentMaxDistance;
     currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
     } else {
       InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
-      recursiveIter(tolerance, line1, line3, resultPoints);
+      recursiveIter(tolerance, line1, line3, resultPoints, angle-plusMinusAngle);
       resultPoints.add(circleIntersectionPoint);
-      recursiveIter(tolerance, line3, line2,  resultPoints);
+      recursiveIter(tolerance, line3, line2,  resultPoints, angle+plusMinusAngle);
     }
   }
 
@@ -116,29 +118,12 @@ public class GeoCirclePolygonizer {
     }
   }
 
-  //assumed that point is outside circle
-  protected Point calcCircleIntersection(Point point){
-
-    double radius = circ.getRadius();
-    double slope = calcSlope(center, point);
-    double theta = Math.atan(slope);
-    double bearing = ((Math.PI/2) - theta)*(180/Math.PI);
-    if(ctx.isGeo()){bearing = 90 + bearing;};
-    Point intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
-    return intersectionPoint;
+  protected Point calcCircleIntersection(double angle){
+    return ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), angle, ctx, null);
   }
 
   //must be given a point on the circle
   protected InfBufLine calcTangentLine(Point pt){
-    /* The stretch factor applied to the slope should be the ratio of a unit of distance in latitude over
-     * the same unit in longitudes (at the point).  Maybe flip the numerator and denominator.
-     * */
-    // length long = pi/180 * a (radius of earth) * cos(theta) < theta = degrees lat
-    // length lat = pi/180 * a/360
-    // a = 6,371 kilometers
-    //therefore, lat/long = a/360 / a*cos(theta) = 1/360*cos(theta)
-
-    double skewingFactor = DistanceUtils.calcLonDegreesAtLat(pt.getY(), 1); //dist = 1 ?
     double epsilon = 1E-12;
     double x = pt.getX()-center.getX();
     double y = pt.getY()-center.getY();
@@ -147,33 +132,30 @@ public class GeoCirclePolygonizer {
     assert ((x*x + y*y < radiusSquared+epsilon) &&
             (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
 
+    double slope = (getPerpSlope(calcSlope(center, pt)))*skew;
+//    double slope = getPerpSlope(calcSlope(center, pt));
+//    double slope = slope*skew;
 
-    //if geodetic, need to calculate a different slope (given two points)
-    //double skewingFactor = 1/(360* Math.cos(Math.toRadians(definingPoint2.getY())));
-    //InfBufLine line2 = new InfBufLine (skewingFactor, definingPoint2, 0);
-
-    //letting the dist of one degree of lat = 1
-    //and dist of one degree of long at that lat = distLon
-    double distLon = DistanceUtils.calcLonDegreesAtLat(pt.getY(), 1);
-    double skew = distLon;
-    //double slope = Math.tan(90 * skew);
-    //near pole(85 lat), lat is about 7 times the dist of long
-
-    double slope = getPerpSlope(calcSlope(center, pt));
-//    System.out.print('\n');
-//    System.out.print("slope: ");
-//    System.out.print(slope);
-//    slope = slope*skew;
-//    System.out.print('\n');
-//    System.out.print("skew: ");
-//    System.out.print(skew);
-//    System.out.print('\n');
-//    System.out.print("new slope: ");
-//    System.out.print(slope);
     return new InfBufLine(slope, pt, 0);
   }
 
   protected double calcSlope(Point point1, Point point2){
+
+//    Point origin = ctx.makePoint(ctx.getWorldBounds().getMinX(), ctx.getWorldBounds().getMinY());
+//    Point translatedPoint1 = ctx.makePoint(point1.getX()-center.getX(), point1.getY()-center.getY());
+//    Point translatedPoint2 = ctx.makePoint(point2.getX()-center.getX(), point2.getY()-center.getY());
+//
+//    if(translatedPoint1.equals(translatedPoint2)){
+//      throw new IllegalArgumentException("Cannot calculate slope between two equivalent points");
+//    }
+//    double changeInY = translatedPoint2.getY()-translatedPoint1.getY();
+//    double changeInX = translatedPoint2.getX()-translatedPoint1.getX();
+//    if(changeInX == 0){
+//      return Double.POSITIVE_INFINITY;
+//    }
+//    return changeInY/changeInX;
+
+
     if(point1.equals(point2)){
       throw new IllegalArgumentException("Cannot calculate slope between two equivalent points");
     }
@@ -186,6 +168,18 @@ public class GeoCirclePolygonizer {
   }
 
   protected double getPerpSlope(double slope){
+
+    double translatedSlope = slope/skew;
+
+
+    if(Double.isInfinite(translatedSlope)){
+      return 0;
+    }else if(translatedSlope == 0){
+      return Double.POSITIVE_INFINITY;
+    }
+    return -1/translatedSlope;
+
+
     if(Double.isInfinite(slope)){
       return 0;
     }else if(slope == 0){
