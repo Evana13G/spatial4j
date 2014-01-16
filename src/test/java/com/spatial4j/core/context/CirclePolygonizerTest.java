@@ -26,7 +26,7 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
   public CirclePolygonizerTest() {
     ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 0, 100, null));
     circ = ctx.makeCircle(50, 50, 10);
-    polygonizer = new CirclePolygonizer(ctx, circ, false);
+    polygonizer = new CirclePolygonizer(ctx, circ);
   }
 
   @Test
@@ -58,14 +58,15 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     InfBufLine line3 = new InfBufLine(Double.POSITIVE_INFINITY, point1, 0);
     InfBufLine line4 = new InfBufLine(Double.POSITIVE_INFINITY, point2, 0);
-    // Make sure it throws and exception
+
+    // TODO Make sure it throws and exception
 
     point1.reset(25, 0);
     point2.reset(75, 0);
 
     InfBufLine line5 = new InfBufLine(1, point1, 0);
     InfBufLine line6 = new InfBufLine(1, point2, 0);
-    // Make sure it throws and exception
+    // TODO Make sure it throws and exception
 
 
     InfBufLine line7 = new InfBufLine(1, point1, 0);
@@ -163,8 +164,6 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     List <Point> pointsToTest = getCoordinatesGivenDistance(DISTANCE, tangentLine);
     Point point1 = pointsToTest.get(0);
     Point point2 = pointsToTest.get(1);
-
-    //System.out.print(pointsToTest);
 
     assertTrue(isOutsideCircle(point1));
     assertTrue(isOutsideCircle(point2));
