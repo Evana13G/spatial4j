@@ -21,7 +21,7 @@ public class GeoCirclePolygonizer {
     Circle circle = new GeoCircle(ctx.makePoint(100, 20), 4, ctx);
     GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle);
 
-    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.00001);
+    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.1);
   }
 
   protected final SpatialContext ctx;
@@ -49,6 +49,7 @@ public class GeoCirclePolygonizer {
     Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
+    //InfBufLine line2 = new InfBufLine (skewCartesianSlope(Double.POSITIVE_INFINITY, definingPoint2), definingPoint2, 0);
     InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
 
     ArrayList<Point> resultPoints = new ArrayList<Point>();
@@ -84,7 +85,6 @@ public class GeoCirclePolygonizer {
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(angle);
     double plusMinusAngle = (angle/2);
-
     double currentMaxDistance;
     currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
     if (currentMaxDistance <= tolerance){
@@ -132,7 +132,7 @@ public class GeoCirclePolygonizer {
     assert ((x*x + y*y < radiusSquared+epsilon) &&
             (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
 
-    double slope = (getPerpSlope(calcSlope(center, pt)))*skew;
+    double slope = skewCartesianSlope(getPerpSlope(calcSlope(center, pt)), pt);
 //    double slope = getPerpSlope(calcSlope(center, pt));
 //    double slope = slope*skew;
 
@@ -154,8 +154,7 @@ public class GeoCirclePolygonizer {
 //      return Double.POSITIVE_INFINITY;
 //    }
 //    return changeInY/changeInX;
-
-
+    //return skewCartesianSlope(changeInY/changeInX, point2);
     if(point1.equals(point2)){
       throw new IllegalArgumentException("Cannot calculate slope between two equivalent points");
     }
@@ -169,16 +168,13 @@ public class GeoCirclePolygonizer {
 
   protected double getPerpSlope(double slope){
 
-    double translatedSlope = slope/skew;
-
-
-    if(Double.isInfinite(translatedSlope)){
-      return 0;
-    }else if(translatedSlope == 0){
-      return Double.POSITIVE_INFINITY;
-    }
-    return -1/translatedSlope;
-
+//    double translatedSlope = slope/skew;
+//    if(Double.isInfinite(translatedSlope)){
+//      return 0;
+//    }else if(translatedSlope == 0){
+//      return Double.POSITIVE_INFINITY;
+//    }
+//    return (-1/translatedSlope)*skew;
 
     if(Double.isInfinite(slope)){
       return 0;
@@ -226,4 +222,27 @@ public class GeoCirclePolygonizer {
       System.out.print('\n');
     }
   }
+
+  //true = clockwise, false = counter-clockwise
+  public double skewCartesianSlope(double slope, Point pt){
+
+
+    boolean direction = (pt.getX() > center.getX())? true : false;
+    double angle;
+    if(Double.isInfinite(slope)){
+      angle = (Math.PI/2)*skew;
+      if(direction == true){
+        return Math.tan(angle);
+      }else{
+        return Math.tan(Math.PI-angle);
+      }
+    }else if(slope == 0){
+      return 0;
+    }
+    return slope*skew;
+  }
+
+
+
+
 }
