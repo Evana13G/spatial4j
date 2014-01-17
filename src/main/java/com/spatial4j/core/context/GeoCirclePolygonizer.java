@@ -18,10 +18,10 @@ public class GeoCirclePolygonizer {
   public static void main(String[] args) {
 
     SpatialContext ctx = SpatialContext.GEO;
-    Circle circle = new GeoCircle(ctx.makePoint(100, 60), 10, ctx);
+    Circle circle = new GeoCircle(ctx.makePoint(100, 85), 3, ctx);
     GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle);
 
-    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(1);
+    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.001);
   }
 
   protected final SpatialContext ctx;
@@ -125,8 +125,14 @@ public class GeoCirclePolygonizer {
     assert ((x*x + y*y < radiusSquared+epsilon) &&
             (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
 
-    double slope = getPerpSlope(calcSlope(center, pt));
-//    double slope = getPerpSlope(calcSlope(center, pt));
+    double theta = Math.atan(y/x);
+
+
+    Point pt1 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)+1, ctx, null);
+    Point pt2 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)-1, ctx, null);
+
+    //double slope = getPerpSlope(calcSlope(center, pt));
+    double slope = calcSlope(pt2, pt1);
 //    double slope = slope*skew;
 
     return new InfBufLine(slope, pt, 0);
