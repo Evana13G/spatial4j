@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.spatial4j.core.distance.CartesianDistCalc;
+import com.spatial4j.core.distance.DistanceCalculator;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.distance.GeodesicSphereDistCalc;
 import com.spatial4j.core.shape.Circle;
@@ -18,10 +19,10 @@ public class GeoCirclePolygonizer {
   public static void main(String[] args) {
 
     SpatialContext ctx = SpatialContext.GEO;
-    Circle circle = new GeoCircle(ctx.makePoint(100, 85), 3, ctx);
+    Circle circle = new GeoCircle(ctx.makePoint(100, 85), 10, ctx);
     GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle);
 
-    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.001);
+    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.0001);
   }
 
   protected final SpatialContext ctx;
@@ -38,16 +39,24 @@ public class GeoCirclePolygonizer {
 
   public List<Point> getEnclosingPolygon(double tolerance){
 
-    double xCoor1 = center.getX();
-    double yCoor1 = center.getY()+circ.getRadius();
-    double xCoor2 = center.getX()+circ.getRadius();
-    double yCoor2 = axialCenter.getY();
+    DistanceCalculator calc = new CartesianDistCalc();
+    //re-examine the initial frame stuff
+    //know the circle, so can get the bounding box
 
+    double xCoor1 = center.getX();
+    double yCoor1 = circ.getBoundingBox().getMaxY();
+
+    double theta = 90 - Math.asin((axialCenter.getY() - center.getY()) / circ.getRadius());
+    System.out.print(theta);
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
-    Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
+    Point definingPoint2 = calc.pointOnBearing(center, circ.getRadius(), theta, ctx, null);
+
+    System.out.print(definingPoint1);
+    System.out.print(definingPoint2);
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
-    InfBufLine line2 = new InfBufLine (getPerpSlope(calcSlope(center, definingPoint2)), definingPoint2, 0);
+    //InfBufLine line2 = new InfBufLine(getPerpSlope(calcSlope(center, definingPoint2)), definingPoint2, 0);
+    InfBufLine line2 = new InfBufLine(Double.POSITIVE_INFINITY, definingPoint2, 0);
 
     /*HANDLE QUADRANT 1*/
     ArrayList<Point> resultPoints = new ArrayList<Point>();
@@ -57,7 +66,8 @@ public class GeoCirclePolygonizer {
 
     /*HANDLE QUADRANT 4*/
     double xCoor3 = xCoor1;
-    double yCoor3 = center.getY() - (yCoor1 - center.getY());
+    //double yCoor3 = center.getY() - (yCoor1 - center.getY());
+    double yCoor3 = circ.getBoundingBox().getMinY();
     Point definingPoint3 = ctx.makePoint(xCoor3, yCoor3);
     InfBufLine line3 = new InfBufLine (0.0, definingPoint3, 0);
     ArrayList<Point> resultPointsQuad4 = new ArrayList<Point>();
@@ -131,9 +141,9 @@ public class GeoCirclePolygonizer {
     Point pt1 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)+1, ctx, null);
     Point pt2 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)-1, ctx, null);
 
-    //double slope = getPerpSlope(calcSlope(center, pt));
-    double slope = calcSlope(pt2, pt1);
-//    double slope = slope*skew;
+    double slope = getPerpSlope(calcSlope(center, pt));
+    //double slope = calcSlope(pt2, pt1);
+    //double slope = slope*skew;
 
     return new InfBufLine(slope, pt, 0);
   }
