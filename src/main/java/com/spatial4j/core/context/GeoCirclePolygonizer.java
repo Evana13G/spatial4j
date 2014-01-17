@@ -18,24 +18,22 @@ public class GeoCirclePolygonizer {
   public static void main(String[] args) {
 
     SpatialContext ctx = SpatialContext.GEO;
-    Circle circle = new GeoCircle(ctx.makePoint(100, 20), 4, ctx);
+    Circle circle = new GeoCircle(ctx.makePoint(100, 60), 10, ctx);
     GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle);
 
-    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.1);
+    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(1);
   }
 
   protected final SpatialContext ctx;
   protected final Circle circ;
   protected final Point center;
   protected final Point axialCenter;
-  protected final double skew;
 
   public GeoCirclePolygonizer(SpatialContext ctx, Circle circ){
     this.ctx = ctx;
     this.circ = circ;
     this.center = circ.getCenter();
     this.axialCenter = ctx.makePoint(center.getX(), ((CircleImpl) circ).getYAxis());
-    this.skew = 1/(DistanceUtils.calcLonDegreesAtLat(center.getY(), 1));
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
@@ -49,51 +47,46 @@ public class GeoCirclePolygonizer {
     Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
     InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
-    //InfBufLine line2 = new InfBufLine (skewCartesianSlope(Double.POSITIVE_INFINITY, definingPoint2), definingPoint2, 0);
-    InfBufLine line2 = new InfBufLine (Double.POSITIVE_INFINITY, definingPoint2, 0);
+    InfBufLine line2 = new InfBufLine (getPerpSlope(calcSlope(center, definingPoint2)), definingPoint2, 0);
 
+    /*HANDLE QUADRANT 1*/
     ArrayList<Point> resultPoints = new ArrayList<Point>();
     resultPoints.add(definingPoint1);
-    recursiveIter(tolerance, line1, line2, resultPoints, Math.PI/4);
+    recursiveIter(tolerance, line1, line2, resultPoints, Math.PI/4, Math.PI/8);
     resultPoints.add(definingPoint2);
 
     /*HANDLE QUADRANT 4*/
-//    System.out.print("Not getting here! \n");
-//    if(ctx.isGeo()){
-//      double xCoor3 = xCoor1;
-//      double yCoor3 = yCoor2 - (yCoor1 - yCoor2);
-//      Point definingPoint3 = ctx.makePoint(xCoor3, yCoor3);
-//      InfBufLine line3 = new InfBufLine (0.0, definingPoint3, 0);
-//      ArrayList<Point> resultPointsQuad4 = new ArrayList<Point>();
-//      recursiveIter(tolerance, line2, line3, resultPointsQuad4);
-//      resultPointsQuad4.add(definingPoint3);
-//
-//      //combine the lists of Q1 and Q4 points
-//      int resultListSize = resultPointsQuad4.size();
-//      for(int i=0; i<resultListSize; i++){
-//        resultPoints.add(resultPointsQuad4.get(0));
-//      }
-//    }
+    double xCoor3 = xCoor1;
+    double yCoor3 = center.getY() - (yCoor1 - center.getY());
+    Point definingPoint3 = ctx.makePoint(xCoor3, yCoor3);
+    InfBufLine line3 = new InfBufLine (0.0, definingPoint3, 0);
+    ArrayList<Point> resultPointsQuad4 = new ArrayList<Point>();
+    recursiveIter(tolerance, line2, line3, resultPointsQuad4, Math.PI*3/4, Math.PI/8);
+    resultPointsQuad4.add(definingPoint3);
+
+    //combine the lists of Q1 and Q4 points
+    int resultListSize = resultPointsQuad4.size();
+    for(int i=0; i<resultListSize; i++){
+      resultPoints.add(resultPointsQuad4.get(i));
+    }
 
     translatePoints(resultPoints);
     printListOfPoints(resultPoints);
-
     return resultPoints;
   }
 
-  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints, double angle){
+  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints, double angle, double plusMinusValue){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(angle);
-    double plusMinusAngle = (angle/2);
     double currentMaxDistance;
     currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
     } else {
       InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
-      recursiveIter(tolerance, line1, line3, resultPoints, angle-plusMinusAngle);
+      recursiveIter(tolerance, line1, line3, resultPoints, angle-plusMinusValue, plusMinusValue/2);
       resultPoints.add(circleIntersectionPoint);
-      recursiveIter(tolerance, line3, line2,  resultPoints, angle+plusMinusAngle);
+      recursiveIter(tolerance, line3, line2,  resultPoints, angle+plusMinusValue, plusMinusValue/2);
     }
   }
 
@@ -119,7 +112,7 @@ public class GeoCirclePolygonizer {
   }
 
   protected Point calcCircleIntersection(double angle){
-    return ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), angle, ctx, null);
+    return ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(angle), ctx, null);
   }
 
   //must be given a point on the circle
@@ -132,7 +125,7 @@ public class GeoCirclePolygonizer {
     assert ((x*x + y*y < radiusSquared+epsilon) &&
             (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
 
-    double slope = skewCartesianSlope(getPerpSlope(calcSlope(center, pt)), pt);
+    double slope = getPerpSlope(calcSlope(center, pt));
 //    double slope = getPerpSlope(calcSlope(center, pt));
 //    double slope = slope*skew;
 
@@ -215,18 +208,26 @@ public class GeoCirclePolygonizer {
     }
   }
 
+//  public void printListOfPoints(List <Point> resultPoints){
+//    System.out.print("\nPolygon Points\n");
+//    for(int i=0;i<resultPoints.size(); i++){
+//      System.out.print(resultPoints.get(i));
+//      System.out.print('\n');
+//    }
+//  }
+
   public void printListOfPoints(List <Point> resultPoints){
-    System.out.print("\nPolygon Points\n");
     for(int i=0;i<resultPoints.size(); i++){
-      System.out.print(resultPoints.get(i));
-      System.out.print('\n');
+      System.out.print(resultPoints.get(i).getX());
+      System.out.print(',');
+      System.out.print(resultPoints.get(i).getY());
+      System.out.print(':');
     }
   }
 
   //true = clockwise, false = counter-clockwise
   public double skewCartesianSlope(double slope, Point pt){
-
-
+    double skew = 1/(DistanceUtils.calcLonDegreesAtLat(pt.getY(), 1));
     boolean direction = (pt.getX() > center.getX())? true : false;
     double angle;
     if(Double.isInfinite(slope)){
@@ -241,8 +242,6 @@ public class GeoCirclePolygonizer {
     }
     return slope*skew;
   }
-
-
 
 
 }
