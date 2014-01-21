@@ -40,13 +40,13 @@ public class GeoCirclePolygonizer {
 
     double xCoor1 = center.getX();
     double yCoor1 = center.getY()+circ.getRadius();
-    double xCoor2 = center.getX()+circ.getRadius();
+    double xCoor2 = center.getX()+circ.getRadius(); //TODO change this coor
     double yCoor2 = axialCenter.getY();
 
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
     Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
-    InfBufLine line1 = new InfBufLine (0.0, definingPoint1, 0);
+    InfBufLine line1 = new InfBufLine(0, definingPoint1, 0);
     InfBufLine line2 = new InfBufLine (getPerpSlope(calcSlope(center, definingPoint2)), definingPoint2, 0);
 
     /*HANDLE QUADRANT 1*/
