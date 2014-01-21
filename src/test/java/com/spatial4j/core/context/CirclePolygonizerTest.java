@@ -24,9 +24,15 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   //constructor for test class?
   public CirclePolygonizerTest() {
+
+
     ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 0, 100, null));
     circ = ctx.makeCircle(50, 50, 10);
     polygonizer = new CirclePolygonizer(ctx, circ);
+
+    //random test
+    //circ = ctx.makeCircle(randomIntBetween(10, 90), randomIntBetween(10, 90), randomIntBetween(1, 10));
+
   }
 
   @Test
@@ -59,15 +65,25 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     InfBufLine line3 = new InfBufLine(Double.POSITIVE_INFINITY, point1, 0);
     InfBufLine line4 = new InfBufLine(Double.POSITIVE_INFINITY, point2, 0);
 
-    // TODO Make sure it throws and exception
+    try {
+      polygonizer.calcLineIntersection(line3, line4);
+      fail();
+    } catch (IllegalArgumentException e) {
+      //expected
+    }
 
     point1.reset(25, 0);
     point2.reset(75, 0);
 
     InfBufLine line5 = new InfBufLine(1, point1, 0);
     InfBufLine line6 = new InfBufLine(1, point2, 0);
-    // TODO Make sure it throws and exception
 
+    try {
+      polygonizer.calcLineIntersection(line5, line6);
+      fail();
+    } catch (IllegalArgumentException e) {
+      //expected
+    }
 
     InfBufLine line7 = new InfBufLine(1, point1, 0);
     InfBufLine line8 = new InfBufLine(Double.POSITIVE_INFINITY, point2, 0);
@@ -77,12 +93,16 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
   @Test
   public void testCalcCircleIntersection(){
-    //Test with a point from all four quadrants
+
     Point point1 = ctx.makePoint(100,100);
     assertEquals(ctx.makePoint(57.0710678118654755,57.0710678118654755), polygonizer.calcCircleIntersection(point1));
 
     point1.reset(100, 0);
     assertEquals(ctx.makePoint(57.0710678118654755,42.928932188134524), polygonizer.calcCircleIntersection(point1));
+
+    //random point intersection:
+   //Point point1 = ctx.makePoint( );
+
   }
 
   @Test
@@ -104,6 +124,13 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
 
     assertEquals(expectedTangentLine2.getSlope(), actualTangentLine2.getSlope(), EPS);
     assertEquals(expectedTangentLine2.getIntercept(), actualTangentLine2.getIntercept(), EPS);
+
+    //random testing
+//    Point pt1 = ctx.makePoint(randomIntBetween(10, 90), randomIntBetween(10, 90));
+//    InfBufLine tangenLinePt1 = polygonizer.calcTangentLine(pt1);
+
+
+
   }
 
   @Test
@@ -199,6 +226,21 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos)));
     assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
     assertFalse(isOutsideCircle(tangentPoint));
+
+    testIsTrueTangent(tangentLine);
+  }
+
+  public void testIsTrueTangent(InfBufLine tangentLine){
+    double DISTANCE = 0.1;
+    List <Point> pointsToTest = getCoordinatesGivenDistance(DISTANCE, tangentLine);
+    Point point1 = pointsToTest.get(0);
+    Point point2 = pointsToTest.get(1);
+    Point point3 = pointsToTest.get(2);
+
+    assertTrue(isOutsideCircle(point1));
+    assertTrue(isOutsideCircle(point2));
+   // assertFalse(isOutsideCircle(point3));
+
   }
 
   public boolean isOutsideCircle(Point point){
@@ -226,10 +268,13 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     double y1 = line.getSlope()*x1 + line.getIntercept();
     double x2 = centerToPoint*Math.cos(thetaInf) + circ.getCenter().getX();
     double y2 = line.getSlope()*x2 + line.getIntercept();
+    double x3 = centerToPoint*Math.cos(theta) + circ.getCenter().getX();
+    double y3 = line.getSlope()*x3 + line.getIntercept();
 
     ArrayList<Point> resultPoints = new ArrayList<Point>();
     resultPoints.add(ctx.makePoint(x1, y1));
     resultPoints.add(ctx.makePoint(x2, y2));
+    resultPoints.add(ctx.makePoint(x3, y3));
     return resultPoints;
   }
 

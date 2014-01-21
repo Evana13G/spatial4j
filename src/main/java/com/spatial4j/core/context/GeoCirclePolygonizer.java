@@ -137,7 +137,6 @@ public class GeoCirclePolygonizer {
 
     double theta = Math.atan(y/x);
 
-
     Point pt1 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)+1, ctx, null);
     Point pt2 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)-1, ctx, null);
 
