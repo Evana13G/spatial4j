@@ -19,16 +19,16 @@ public class CirclePolygonizer {
 
   public static void main(String[] args) {
 /* Cartesian Circle Test*/
-    SpatialContext ctx_cartesian_test = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(-90, 90, -90, 90, null));
-    Circle circle_cartesian_test = ctx_cartesian_test.makeCircle(50.0, 50.0, 10.0);
-    CirclePolygonizer CirclePolygonizerObj_cartesian_test = new CirclePolygonizer(ctx_cartesian_test, circle_cartesian_test);
-    List<Point> resultPoints_cartesian_test = CirclePolygonizerObj_cartesian_test.getEnclosingPolygon(0.01);
+//    SpatialContext ctx_cartesian_test = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(-90, 90, -90, 90, null));
+//    Circle circle_cartesian_test = ctx_cartesian_test.makeCircle(50.0, 50.0, 10.0);
+//    CirclePolygonizer CirclePolygonizerObj_cartesian_test = new CirclePolygonizer(ctx_cartesian_test, circle_cartesian_test);
+//    List<Point> resultPoints_cartesian_test = CirclePolygonizerObj_cartesian_test.getEnclosingPolygon(0.01);
 
 /* Geodetic Circle Test*/
-//    SpatialContext ctx_geodetic_test = new SpatialContext(true, null, null);
-//    Circle circle_geodetic_test = (CircleImpl)(new GeoCircle(ctx_geodetic_test.makePoint(100, 70), 10, ctx_geodetic_test));
-//    CirclePolygonizer CirclePolygonizerObj_geodetic_test = new CirclePolygonizer(ctx_geodetic_test, circle_geodetic_test);
-//    List<Point> resultPoints_geodetic_test = CirclePolygonizerObj_geodetic_test.getEnclosingPolygon(0.01);
+    SpatialContext ctx_geodetic_test = new SpatialContext(true, null, null);
+    Circle circle_geodetic_test = (CircleImpl)(new GeoCircle(ctx_geodetic_test.makePoint(100, 70), 10, ctx_geodetic_test));
+    CirclePolygonizer CirclePolygonizerObj_geodetic_test = new CirclePolygonizer(ctx_geodetic_test, circle_geodetic_test);
+    List<Point> resultPoints_geodetic_test = CirclePolygonizerObj_geodetic_test.getEnclosingPolygon(0.01);
 
   }
 
@@ -114,8 +114,18 @@ public class CirclePolygonizer {
     double radius = circ.getRadius();
     double slope = calcSlope(center, point);
     double theta = Math.atan(slope);
-    double bearing = ((Math.PI/2) - theta)*(180/Math.PI);
-    Point intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
+    double bearing = Math.toDegrees((Math.PI / 2) - theta);
+    Point intersectionPoint;
+
+    System.out.print(Math.toDegrees(theta));
+    System.out.print('\n');
+
+    if(ctx.isGeo()){
+      intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
+    }
+    else{
+      intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
+    }
     return intersectionPoint;
   }
 
@@ -271,6 +281,7 @@ public class CirclePolygonizer {
  // Equation of Circle: (x-centerX)^2 + (y-centerY)^2 = R^2
 
   protected Point mercatorProjection(Point pointLonLat){
+//source: http://stackoverflow.com/questions/14329691/covert-latitude-longitude-point-to-a-pixels-x-y-on-mercator-projection
     double latitude = pointLonLat.getY();
     double longitude = pointLonLat.getX();
     double mapWidth = 100;
