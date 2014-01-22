@@ -10,6 +10,7 @@ import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
 import org.omg.CORBA.MARSHAL;
+import sun.net.www.content.text.plain;
 
 
 /**
@@ -28,7 +29,7 @@ public class CirclePolygonizer {
     SpatialContext ctx_geodetic_test = new SpatialContext(true, null, null);
     Circle circle_geodetic_test = (CircleImpl)(new GeoCircle(ctx_geodetic_test.makePoint(100, 70), 10, ctx_geodetic_test));
     CirclePolygonizer CirclePolygonizerObj_geodetic_test = new CirclePolygonizer(ctx_geodetic_test, circle_geodetic_test);
-    List<Point> resultPoints_geodetic_test = CirclePolygonizerObj_geodetic_test.getEnclosingPolygon(0.01);
+    List<Point> resultPoints_geodetic_test = CirclePolygonizerObj_geodetic_test.getEnclosingPolygon(0.1);
 
   }
 
@@ -64,7 +65,7 @@ public class CirclePolygonizer {
 
     ArrayList<Point> resultPoints = new ArrayList<Point>();
     resultPoints.add(definingPoint1);
-    recursiveIter(tolerance, line1, line2, resultPoints);
+    recursiveIter(tolerance, line1, line2, resultPoints, Math.PI/4, Math.PI/8);
     resultPoints.add(definingPoint2);
 
     translatePoints(resultPoints);
@@ -73,18 +74,18 @@ public class CirclePolygonizer {
     return resultPoints;
   }
 
-  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints){
+  protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints, double angle, double plusMinusAngle){
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
-    Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
+    Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint, angle);
     double currentMaxDistance;
     currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
     } else {
       InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
-      recursiveIter(tolerance, line1, line3, resultPoints);
+      recursiveIter(tolerance, line1, line3, resultPoints, angle-plusMinusAngle, plusMinusAngle/2);
       resultPoints.add(circleIntersectionPoint);
-      recursiveIter(tolerance, line3, line2,  resultPoints);
+      recursiveIter(tolerance, line3, line2,  resultPoints, angle+plusMinusAngle, plusMinusAngle/2);
     }
   }
 
@@ -110,15 +111,18 @@ public class CirclePolygonizer {
   }
 
   //assumed that point is outside circle
-  protected Point calcCircleIntersection(Point point){
+  protected Point calcCircleIntersection(Point point, double angle){
     double radius = circ.getRadius();
     double slope = calcSlope(center, point);
     double theta = Math.atan(slope);
-    double bearing = Math.toDegrees((Math.PI / 2) - theta);
-    Point intersectionPoint;
+    double bearing = 0;
+    if(ctx.isGeo()){
+      bearing = Math.toDegrees(angle);
+    }else{
+      Math.toDegrees((Math.PI / 2) - theta);
+    }
 
-    System.out.print(Math.toDegrees(theta));
-    System.out.print('\n');
+    Point intersectionPoint;
 
     if(ctx.isGeo()){
       intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
@@ -148,8 +152,9 @@ public class CirclePolygonizer {
 //    Point upperRight = ctx.makePoint(point2.getX(), point2.getY()+(point1.getY()-point2.getY()));
 //    return new InfBufLine(slope, upperRight, 0);
 
-
-
+    if(ctx.isGeo()){
+      return new InfBufLine(skewCartesianSlope(getPerpSlope(calcSlope(center, pt)), pt), pt, 0);
+    }
     return new InfBufLine(getPerpSlope(calcSlope(center, pt)), pt, 0);
   }
 
@@ -176,7 +181,7 @@ public class CirclePolygonizer {
 
   protected void translatePoints(List <Point> resultPoints){
     if (ctx.isGeo()){
-      reflect('y', center, false, false, resultPoints);
+      //reflect('y', center, false, false, resultPoints);
     }else{
       reflect('x', center, true, false, resultPoints);
       reflect('y', center, false, false, resultPoints);
