@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.spatial4j.core.distance.CartesianDistCalc;
-import com.spatial4j.core.distance.GeodesicSphereDistCalc;
+import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
@@ -20,25 +20,26 @@ public class CirclePolygonizer {
 /* Cartesian Circle Test*/
 //    SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
 //    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle, false);
+//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
 
 ///* Geodetic Circle Test*/
-    SpatialContext ctx = new SpatialContext(true, null, null);
-    Circle circle = (CircleImpl)(new GeoCircle(ctx.makePoint(100, 70), 10, ctx));
-    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
+//    SpatialContext ctx = new SpatialContext(true, null, null);
+//    Circle circle = (CircleImpl)(new GeoCircle(ctx.makePoint(100, 70), 10, ctx));
+//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
 
-    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
+//    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
   }
 
   protected SpatialContext ctx;
   protected Circle circ;
   protected Point center;
-
+  protected Point axialCenter;
 
   public CirclePolygonizer(SpatialContext ctx, Circle circ){
     this.ctx = ctx;
     this.circ = circ;
     this.center = circ.getCenter();
+    this.axialCenter = ctx.makePoint(center.getX(), ((CircleImpl) circ).getYAxis());
   }
 
   public List<Point> getEnclosingPolygon(double tolerance){
@@ -47,6 +48,11 @@ public class CirclePolygonizer {
     double yCoor1 = center.getY()+circ.getRadius();
     double xCoor2 = center.getX()+circ.getRadius();
     double yCoor2 = center.getY();
+
+    if (ctx.isGeo()){
+      xCoor2 = circ.getBoundingBox().getMaxX();
+      yCoor2 = axialCenter.getY();
+    }
 
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
     Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
@@ -109,11 +115,6 @@ public class CirclePolygonizer {
     double theta = Math.atan(slope);
     double bearing = ((Math.PI/2) - theta)*(180/Math.PI);
     Point intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
-
-    //double x = radius*Math.cos(theta) + center.getX();
-    //double y = radius*Math.sin(theta) + center.getY();
-    //return new PointImpl(x, y, ctx);
-
     return intersectionPoint;
   }
 
@@ -126,6 +127,15 @@ public class CirclePolygonizer {
     double radiusSquared = radius*radius;
     assert ((x*x + y*y < radiusSquared+epsilon) &&
         (x*x + y*y > radiusSquared-epsilon)) : "Point is not tangent to circle";
+
+    //Two point approximation
+//    double theta = Math.atan(y/x);
+//    Point point1 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)+1, ctx, null);
+//    Point point2 = ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(theta)-1, ctx, null);
+//    double slope = calcSlope(point1, point2);
+//    Point upperRight = ctx.makePoint(point2.getX(), point2.getY()+(point1.getY()-point2.getY()));
+//    return new InfBufLine(slope, upperRight, 0);
+
     return new InfBufLine(getPerpSlope(calcSlope(center, pt)), pt, 0);
   }
 
@@ -151,8 +161,12 @@ public class CirclePolygonizer {
   }
 
   protected void translatePoints(List <Point> resultPoints){
-    reflect('x', center, true, false, resultPoints);
-    reflect('y', center, false, false, resultPoints);
+    if (ctx.isGeo()){
+      reflect('y', center, false, false, resultPoints);
+    }else{
+      reflect('x', center, true, false, resultPoints);
+      reflect('y', center, false, false, resultPoints);
+    }
   }
 
   public void reflect(char axisToReflectOver, Point axesIntersectionPoint, boolean inclusiveStartPt, boolean inclusiveEndPt, List <Point> resultPoints){
@@ -189,5 +203,70 @@ public class CirclePolygonizer {
       System.out.print('\n');
     }
   }
+
+
+  //Functions that may or may not be used
+
+  //true = clockwise, false = counter-clockwise
+  public double skewCartesianSlope(double slope, Point pt){
+    double skew = 1/(DistanceUtils.calcLonDegreesAtLat(pt.getY(), 1));
+    boolean direction = (pt.getX() > center.getX())? true : false;
+    double angle;
+    if(Double.isInfinite(slope)){
+      angle = (Math.PI/2)*skew;
+      if(direction == true){
+        return Math.tan(angle);
+      }else{
+        return Math.tan(Math.PI-angle);
+      }
+    }else if(slope == 0){
+      return 0;
+    }
+    return slope*skew;
+  }
+
+  protected void recursiveIterAngles(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints, double angle, double plusMinusValue){
+    Point lineIntersectionPoint = calcLineIntersection(line1, line2);
+    Point circleIntersectionPoint = calcCircleIntersectionAngles(angle);
+    double currentMaxDistance;
+    currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
+    if (currentMaxDistance <= tolerance){
+      resultPoints.add(lineIntersectionPoint);
+    } else {
+      InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
+      recursiveIterAngles(tolerance, line1, line3, resultPoints, angle-plusMinusValue, plusMinusValue/2);
+      resultPoints.add(circleIntersectionPoint);
+      recursiveIterAngles(tolerance, line3, line2,  resultPoints, angle+plusMinusValue, plusMinusValue/2);
+    }
+  }
+
+  protected Point calcCircleIntersectionAngles(double angle){
+    return ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(angle), ctx, null);
+  }
+
+//to be placed in main to handle quadrant 4
+
+    /*HANDLE QUADRANT 1*/
+//    ArrayList<Point> resultPoints = new ArrayList<Point>();
+//    resultPoints.add(definingPoint1);
+//    recursiveIter(tolerance, line1, line2, resultPoints, Math.PI/4, Math.PI/8);
+//    resultPoints.add(definingPoint2);
+
+    /*HANDLE QUADRANT 4*/
+//    double xCoor3 = xCoor1;
+//    //double yCoor3 = center.getY() - (yCoor1 - center.getY());
+//    double yCoor3 = circ.getBoundingBox().getMinY();
+//    Point definingPoint3 = ctx.makePoint(xCoor3, yCoor3);
+//    InfBufLine line3 = new InfBufLine (0.0, definingPoint3, 0);
+//    ArrayList<Point> resultPointsQuad4 = new ArrayList<Point>();
+//    recursiveIter(tolerance, line2, line3, resultPointsQuad4, Math.PI*3/4, Math.PI/8);
+//    resultPointsQuad4.add(definingPoint3);
+//
+//    //combine the lists of Q1 and Q4 points
+//    int resultListSize = resultPointsQuad4.size();
+//    for(int i=0; i<resultListSize; i++){
+//      resultPoints.add(resultPointsQuad4.get(i));
+//    }
+
 
 }
