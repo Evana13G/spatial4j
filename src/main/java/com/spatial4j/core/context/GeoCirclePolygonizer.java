@@ -19,10 +19,10 @@ public class GeoCirclePolygonizer {
   public static void main(String[] args) {
 
     SpatialContext ctx = SpatialContext.GEO;
-    Circle circle = new GeoCircle(ctx.makePoint(100, 85), 10, ctx);
+    Circle circle = new GeoCircle(ctx.makePoint(100, 75), 10, ctx);
     GeoCirclePolygonizer GeoCirclePolygonizerObj = new GeoCirclePolygonizer(ctx, circle);
 
-    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.0001);
+    List<Point> resultPoints = GeoCirclePolygonizerObj.getEnclosingPolygon(0.01);
   }
 
   protected final SpatialContext ctx;
@@ -39,20 +39,14 @@ public class GeoCirclePolygonizer {
 
   public List<Point> getEnclosingPolygon(double tolerance){
 
-    DistanceCalculator calc = new CartesianDistCalc();
-    //re-examine the initial frame stuff
-    //know the circle, so can get the bounding box
-
     double xCoor1 = center.getX();
     double yCoor1 = center.getY()+circ.getRadius();
 
     double xCoor2 = circ.getBoundingBox().getMaxX();
     double yCoor2 = axialCenter.getY();
 
-    double theta = 90 - Math.asin((axialCenter.getY() - center.getY()) / circ.getRadius());
-    System.out.print(theta);
     Point definingPoint1 = ctx.makePoint(xCoor1, yCoor1);
-    Point definingPoint2 = calc.pointOnBearing(center, circ.getRadius(), theta, ctx, null);
+    Point definingPoint2 = ctx.makePoint(xCoor2, yCoor2);
 
     InfBufLine line1 = new InfBufLine(0, definingPoint1, 0);
     InfBufLine line2 = new InfBufLine(Double.POSITIVE_INFINITY, definingPoint2, 0);
@@ -64,20 +58,20 @@ public class GeoCirclePolygonizer {
     resultPoints.add(definingPoint2);
 
     /*HANDLE QUADRANT 4*/
-    double xCoor3 = xCoor1;
-    //double yCoor3 = center.getY() - (yCoor1 - center.getY());
-    double yCoor3 = circ.getBoundingBox().getMinY();
-    Point definingPoint3 = ctx.makePoint(xCoor3, yCoor3);
-    InfBufLine line3 = new InfBufLine (0.0, definingPoint3, 0);
-    ArrayList<Point> resultPointsQuad4 = new ArrayList<Point>();
-    recursiveIter(tolerance, line2, line3, resultPointsQuad4, Math.PI*3/4, Math.PI/8);
-    resultPointsQuad4.add(definingPoint3);
-
-    //combine the lists of Q1 and Q4 points
-    int resultListSize = resultPointsQuad4.size();
-    for(int i=0; i<resultListSize; i++){
-      resultPoints.add(resultPointsQuad4.get(i));
-    }
+//    double xCoor3 = xCoor1;
+//    //double yCoor3 = center.getY() - (yCoor1 - center.getY());
+//    double yCoor3 = circ.getBoundingBox().getMinY();
+//    Point definingPoint3 = ctx.makePoint(xCoor3, yCoor3);
+//    InfBufLine line3 = new InfBufLine (0.0, definingPoint3, 0);
+//    ArrayList<Point> resultPointsQuad4 = new ArrayList<Point>();
+//    recursiveIter(tolerance, line2, line3, resultPointsQuad4, Math.PI*3/4, Math.PI/8);
+//    resultPointsQuad4.add(definingPoint3);
+//
+//    //combine the lists of Q1 and Q4 points
+//    int resultListSize = resultPointsQuad4.size();
+//    for(int i=0; i<resultListSize; i++){
+//      resultPoints.add(resultPointsQuad4.get(i));
+//    }
 
     translatePoints(resultPoints);
     printListOfPoints(resultPoints);

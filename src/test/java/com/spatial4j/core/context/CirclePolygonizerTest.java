@@ -192,18 +192,18 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     Point point1 = pointsToTest.get(0);
     Point point2 = pointsToTest.get(1);
 
-    assertTrue(isOutsideCircle(point1));
-    assertTrue(isOutsideCircle(point2));
-    assertFalse(isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(point1, 3E-15));
+    assertTrue(isOutsideCircle(point2, 3E-15));
+    assertFalse(isOutsideCircle(tangentPoint, 3E-15));
 
     double xPos = tangentPoint.getX() + DISTANCE;
     double xNeg = tangentPoint.getX() - DISTANCE;
     double yPos = tangentLine.getSlope()*xPos + tangentLine.getIntercept();
     double yNeg = tangentLine.getSlope()*xNeg + tangentLine.getIntercept();
 
-    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos)));
-    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
-    assertFalse(isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos), 3E-15));
+    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg), 3E-15));
+    assertFalse(isOutsideCircle(tangentPoint, 3E-15));
 
     tangentPoint.reset(50, 60);
     InfBufLine tangentLine1 = polygonizer.calcTangentLine(tangentPoint);
@@ -212,9 +212,9 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     yPos = tangentLine1.getSlope()*xPos + tangentLine1.getIntercept();
     yNeg = tangentLine1.getSlope()*xNeg + tangentLine1.getIntercept();
 
-    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos)));
-    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
-    assertFalse(isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos), 3E-15));
+    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg), 3E-15));
+    assertFalse(isOutsideCircle(tangentPoint, 3E-15));
 
     tangentPoint.reset(60, 50);
     InfBufLine tangentLine2 = polygonizer.calcTangentLine(tangentPoint);
@@ -223,29 +223,27 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     yPos = tangentPoint.getX()+DISTANCE;
     yNeg = tangentPoint.getX()-DISTANCE;
 
-    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos)));
-    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg)));
-    assertFalse(isOutsideCircle(tangentPoint));
+    assertTrue(isOutsideCircle(ctx.makePoint(xPos, yPos), 3E-15));
+    assertTrue(isOutsideCircle(ctx.makePoint(xNeg, yNeg), 3E-15));
+    assertFalse(isOutsideCircle(tangentPoint, 3E-15));
 
-    testIsTrueTangent(tangentLine);
+    testIsTrueTan(tangentLine);
   }
 
-  public void testIsTrueTangent(InfBufLine tangentLine){
+  public void testIsTrueTan(InfBufLine tangentLine){
     double DISTANCE = 0.1;
     List <Point> pointsToTest = getCoordinatesGivenDistance(DISTANCE, tangentLine);
     Point point1 = pointsToTest.get(0);
     Point point2 = pointsToTest.get(1);
     Point point3 = pointsToTest.get(2);
 
-    assertTrue(isOutsideCircle(point1));
-    assertTrue(isOutsideCircle(point2));
-   // assertFalse(isOutsideCircle(point3));
+    assertTrue(isOutsideCircle(point1, 3E-15));
+    assertTrue(isOutsideCircle(point2, 3E-15));
+    assertFalse(isOutsideCircle(point3, 3E-7));
 
   }
 
-  public boolean isOutsideCircle(Point point){
-    double epsilon = 3E-15;
-//    double epsilon = .000000000000003;
+  public boolean isOutsideCircle(Point point, double epsilon){
     double radius = circ.getRadius();
     double pointDistanceFromCenter = ctx.getDistCalc().distance(circ.getCenter(), point)-epsilon;
     if(pointDistanceFromCenter > radius){
@@ -270,6 +268,8 @@ public class CirclePolygonizerTest extends RandomizedShapeTest{
     double y2 = line.getSlope()*x2 + line.getIntercept();
     double x3 = centerToPoint*Math.cos(theta) + circ.getCenter().getX();
     double y3 = line.getSlope()*x3 + line.getIntercept();
+
+
 
     ArrayList<Point> resultPoints = new ArrayList<Point>();
     resultPoints.add(ctx.makePoint(x1, y1));
