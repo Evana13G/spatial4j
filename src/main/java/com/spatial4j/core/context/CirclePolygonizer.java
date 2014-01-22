@@ -9,6 +9,7 @@ import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
+import org.omg.CORBA.MARSHAL;
 
 
 /**
@@ -18,16 +19,17 @@ public class CirclePolygonizer {
 
   public static void main(String[] args) {
 /* Cartesian Circle Test*/
-//    SpatialContext ctx = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(0, 100, 200, 300, null));
-//    Circle circle = ctx.makeCircle(50.0, 250.0, 10.0);
-//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
+    SpatialContext ctx_cartesian_test = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(-90, 90, -90, 90, null));
+    Circle circle_cartesian_test = ctx_cartesian_test.makeCircle(50.0, 50.0, 10.0);
+    CirclePolygonizer CirclePolygonizerObj_cartesian_test = new CirclePolygonizer(ctx_cartesian_test, circle_cartesian_test);
+    List<Point> resultPoints_cartesian_test = CirclePolygonizerObj_cartesian_test.getEnclosingPolygon(0.01);
 
-///* Geodetic Circle Test*/
-//    SpatialContext ctx = new SpatialContext(true, null, null);
-//    Circle circle = (CircleImpl)(new GeoCircle(ctx.makePoint(100, 70), 10, ctx));
-//    CirclePolygonizer CirclePolygonizerObj = new CirclePolygonizer(ctx, circle);
+/* Geodetic Circle Test*/
+//    SpatialContext ctx_geodetic_test = new SpatialContext(true, null, null);
+//    Circle circle_geodetic_test = (CircleImpl)(new GeoCircle(ctx_geodetic_test.makePoint(100, 70), 10, ctx_geodetic_test));
+//    CirclePolygonizer CirclePolygonizerObj_geodetic_test = new CirclePolygonizer(ctx_geodetic_test, circle_geodetic_test);
+//    List<Point> resultPoints_geodetic_test = CirclePolygonizerObj_geodetic_test.getEnclosingPolygon(0.01);
 
-//    List<Point> resultPoints = CirclePolygonizerObj.getEnclosingPolygon(1);
   }
 
   protected SpatialContext ctx;
@@ -66,7 +68,7 @@ public class CirclePolygonizer {
     resultPoints.add(definingPoint2);
 
     translatePoints(resultPoints);
-    printListOfPoints(resultPoints);
+    printForGrapherMercator(resultPoints);
 
     return resultPoints;
   }
@@ -75,7 +77,7 @@ public class CirclePolygonizer {
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint);
     double currentMaxDistance;
-    currentMaxDistance = (circ.getRadius() - ctx.getDistCalc().distance(center, lineIntersectionPoint));
+    currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
     } else {
@@ -109,7 +111,6 @@ public class CirclePolygonizer {
 
   //assumed that point is outside circle
   protected Point calcCircleIntersection(Point point){
-
     double radius = circ.getRadius();
     double slope = calcSlope(center, point);
     double theta = Math.atan(slope);
@@ -120,6 +121,7 @@ public class CirclePolygonizer {
 
   //must be given a point on the circle
   protected InfBufLine calcTangentLine(Point pt){
+
     double epsilon = 1E-12;
     double x = pt.getX()-center.getX();
     double y = pt.getY()-center.getY();
@@ -135,6 +137,8 @@ public class CirclePolygonizer {
 //    double slope = calcSlope(point1, point2);
 //    Point upperRight = ctx.makePoint(point2.getX(), point2.getY()+(point1.getY()-point2.getY()));
 //    return new InfBufLine(slope, upperRight, 0);
+
+
 
     return new InfBufLine(getPerpSlope(calcSlope(center, pt)), pt, 0);
   }
@@ -197,15 +201,35 @@ public class CirclePolygonizer {
   }
 
   public void printListOfPoints(List <Point> resultPoints){
-    System.out.print("\nPolygon Points\n");
     for(int i=0;i<resultPoints.size(); i++){
       System.out.print(resultPoints.get(i));
       System.out.print('\n');
     }
   }
 
+  public void printForGrapher(List <Point> resultPoints){
+    for(int i=0;i<resultPoints.size(); i++){
+      System.out.print(resultPoints.get(i).getX());
+      System.out.print(',');
+      System.out.print(resultPoints.get(i).getY());
+      System.out.print(':');
+    }
+  }
 
-  //Functions that may or may not be used
+  public void printForGrapherMercator(List <Point> resultPoints){
+    for(int i=0;i<resultPoints.size(); i++){
+      Point pt = mercatorProjection(resultPoints.get(i));
+      System.out.print(pt.getX());
+      System.out.print(',');
+      System.out.print(pt.getY());
+      System.out.print(':');
+    }
+  }
+
+  //***************************************************************************************************//
+  //*******************************Functions that may or may not be used*******************************//
+  //***************************************************************************************************//
+
 
   //true = clockwise, false = counter-clockwise
   public double skewCartesianSlope(double slope, Point pt){
@@ -234,9 +258,9 @@ public class CirclePolygonizer {
       resultPoints.add(lineIntersectionPoint);
     } else {
       InfBufLine line3 = calcTangentLine(circleIntersectionPoint);
-      recursiveIterAngles(tolerance, line1, line3, resultPoints, angle-plusMinusValue, plusMinusValue/2);
+      recursiveIterAngles(tolerance, line1, line3, resultPoints, angle - plusMinusValue, plusMinusValue / 2);
       resultPoints.add(circleIntersectionPoint);
-      recursiveIterAngles(tolerance, line3, line2,  resultPoints, angle+plusMinusValue, plusMinusValue/2);
+      recursiveIterAngles(tolerance, line3, line2, resultPoints, angle + plusMinusValue, plusMinusValue / 2);
     }
   }
 
@@ -244,8 +268,22 @@ public class CirclePolygonizer {
     return ctx.getDistCalc().pointOnBearing(center, circ.getRadius(), Math.toDegrees(angle), ctx, null);
   }
 
-//to be placed in main to handle quadrant 4
+ // Equation of Circle: (x-centerX)^2 + (y-centerY)^2 = R^2
 
+  protected Point mercatorProjection(Point pointLonLat){
+    double latitude = pointLonLat.getY();
+    double longitude = pointLonLat.getX();
+    double mapWidth = 100;
+    double mapHeight = 100;
+
+    double x = (longitude+180)*(mapWidth/360);
+    double latRad = latitude* Math.PI/180;
+    double mercN = Math.log(Math.tan( (Math.PI/4) + (latRad/2)) );
+    double y = (mapHeight/2) - (mapWidth*mercN/(2*Math.PI));
+    return ctx.makePoint(x, y);
+  }
+
+//to be placed in main to handle quadrant 4
     /*HANDLE QUADRANT 1*/
 //    ArrayList<Point> resultPoints = new ArrayList<Point>();
 //    resultPoints.add(definingPoint1);
