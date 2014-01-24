@@ -9,8 +9,6 @@ import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Circle;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.impl.*;
-import org.omg.CORBA.MARSHAL;
-import sun.net.www.content.text.plain;
 
 
 /**
@@ -69,16 +67,22 @@ public class CirclePolygonizer {
     resultPoints.add(definingPoint2);
 
     translatePoints(resultPoints);
-    printForGrapherMercator(resultPoints);
+    //printForGrapherMercator(resultPoints);
 
     return resultPoints;
   }
 
   protected void recursiveIter(double tolerance, InfBufLine line1, InfBufLine line2, List<Point> resultPoints, double angle, double plusMinusAngle){
+//    System.out.print(Math.toDegrees(angle));
+//    System.out.print(", ");
+//    System.out.print(Math.toDegrees(plusMinusAngle));
+//    System.out.print('\n');
     Point lineIntersectionPoint = calcLineIntersection(line1, line2);
     Point circleIntersectionPoint = calcCircleIntersection(lineIntersectionPoint, angle);
     double currentMaxDistance;
-    currentMaxDistance = (ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
+    currentMaxDistance = Math.abs(ctx.getDistCalc().distance(center, lineIntersectionPoint) - circ.getRadius());
+    System.out.print(currentMaxDistance);
+    System.out.print('\n');
     if (currentMaxDistance <= tolerance){
       resultPoints.add(lineIntersectionPoint);
     } else {
@@ -284,7 +288,6 @@ public class CirclePolygonizer {
   }
 
  // Equation of Circle: (x-centerX)^2 + (y-centerY)^2 = R^2
-
   protected Point mercatorProjection(Point pointLonLat){
 //source: http://stackoverflow.com/questions/14329691/covert-latitude-longitude-point-to-a-pixels-x-y-on-mercator-projection
     double latitude = pointLonLat.getY();
