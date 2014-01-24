@@ -18,16 +18,16 @@ public class CirclePolygonizer {
 
   public static void main(String[] args) {
 /* Cartesian Circle Test*/
-//    SpatialContext ctx_cartesian_test = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(-90, 90, -90, 90, null));
-//    Circle circle_cartesian_test = ctx_cartesian_test.makeCircle(50.0, 50.0, 10.0);
-//    CirclePolygonizer CirclePolygonizerObj_cartesian_test = new CirclePolygonizer(ctx_cartesian_test, circle_cartesian_test);
-//    List<Point> resultPoints_cartesian_test = CirclePolygonizerObj_cartesian_test.getEnclosingPolygon(0.01);
+    SpatialContext ctx_cartesian_test = new SpatialContext(false, new CartesianDistCalc(), new RectangleImpl(-90, 90, -90, 90, null));
+    Circle circle_cartesian_test = ctx_cartesian_test.makeCircle(50.0, 50.0, 10.0);
+    CirclePolygonizer CirclePolygonizerObj_cartesian_test = new CirclePolygonizer(ctx_cartesian_test, circle_cartesian_test);
+    List<Point> resultPoints_cartesian_test = CirclePolygonizerObj_cartesian_test.getEnclosingPolygon(0.01);
 
 /* Geodetic Circle Test*/
-    SpatialContext ctx_geodetic_test = new SpatialContext(true, null, null);
-    Circle circle_geodetic_test = (CircleImpl)(new GeoCircle(ctx_geodetic_test.makePoint(100, 70), 10, ctx_geodetic_test));
-    CirclePolygonizer CirclePolygonizerObj_geodetic_test = new CirclePolygonizer(ctx_geodetic_test, circle_geodetic_test);
-    List<Point> resultPoints_geodetic_test = CirclePolygonizerObj_geodetic_test.getEnclosingPolygon(0.1);
+//    SpatialContext ctx_geodetic_test = new SpatialContext(true, null, null);
+//    Circle circle_geodetic_test = (CircleImpl)(new GeoCircle(ctx_geodetic_test.makePoint(100, 70), 10, ctx_geodetic_test));
+//    CirclePolygonizer CirclePolygonizerObj_geodetic_test = new CirclePolygonizer(ctx_geodetic_test, circle_geodetic_test);
+//    List<Point> resultPoints_geodetic_test = CirclePolygonizerObj_geodetic_test.getEnclosingPolygon(0.1);
 
   }
 
@@ -119,21 +119,11 @@ public class CirclePolygonizer {
     double radius = circ.getRadius();
     double slope = calcSlope(center, point);
     double theta = Math.atan(slope);
-    double bearing = 0;
-    if(ctx.isGeo()){
-      bearing = Math.toDegrees(angle);
-    }else{
-      Math.toDegrees((Math.PI / 2) - theta);
-    }
-
-    Point intersectionPoint;
-
-    if(ctx.isGeo()){
-      intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
-    }
-    else{
-      intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
-    }
+    double bearing = Math.toDegrees((Math.PI / 2) - theta);
+//    if(ctx.isGeo()){
+//      bearing = Math.toDegrees(angle);
+//    }
+    Point intersectionPoint = ctx.getDistCalc().pointOnBearing(center, radius, bearing, ctx, null);
     return intersectionPoint;
   }
 
